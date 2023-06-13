@@ -1,0 +1,62 @@
+accessibility: Hidden
+↓complex [steps.XMLComplexStep-1686666123498]: 
+  output: false
+  ↓jIfThenElse [steps.IfThenElseStep-1686666146311]: 
+    condition: mode == "chat"
+    ↓jThen [steps.ThenStep-1686666146908]: 
+      ↓Call_Transaction [steps.TransactionStep-1686583666287]: 
+        sourceTransaction: lib_C8Oforms_AI.GPT.GenerateJsonFormChat
+        ↓prompt [variables.StepVariable-1686583666289]: 
+        ↓reset [variables.StepVariable-1686583666291]: 
+    ↓jElse [steps.ElseStep-1686666146910]: 
+      ↓jIfThenElse [steps.IfThenElseStep-1686666211705]: 
+        condition: mode == "completion"
+        ↓jThen [steps.ThenStep-1686666213161]: 
+          ↓Call_Transaction [steps.TransactionStep-1686666174654]: 
+            sourceTransaction: lib_C8Oforms_AI.GPT.GenerateJsonFormCompletion
+            ↓prompt [variables.StepVariable-1686666174657]: 
+            ↓reset [variables.StepVariable-1686666174660]: 
+        ↓jElse [steps.ElseStep-1686666213163]: 
+          ↓response [steps.JsonFieldStep-1686666396198]: 
+            key: 
+              - xmlizable: 
+                - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                - SmartType: 
+                  - ↑mode: PLAIN
+                  - →→: response
+            output: false
+            value: 
+              - xmlizable: 
+                - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                - SmartType: 
+                  - ↑mode: JS
+                  - →→: '''Invalid mode "'' + mode + ''"'''
+↓response1 [steps.SimpleSourceStep-1686666504666]: 
+  sourceDefinition: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+      - com.twinsoft.convertigo.beans.common.XMLVector: 
+        - java.lang.String: 
+          - ↑value: 1686666123498
+        - java.lang.String: 
+          - ↑value: .//response/text()
+  variableName: response
+↓response [steps.JsonToXmlStep-1686583754061]: 
+  jsonObject: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: JS
+        - →→: 'try { JSON.parse(response) } catch (e) { ({error: response}) }'
+  key: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: PLAIN
+        - →→: response
+↓prompt [variables.RequestableVariable-1686583898966]: 
+↓reset [variables.RequestableVariable-1686583898968]: 
+  value: true
+↓mode [variables.RequestableVariable-1686666080783]: 
+  description: chat (default) or completion
+  value: chat

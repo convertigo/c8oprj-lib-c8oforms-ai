@@ -1,0 +1,184 @@
+↑default: true
+https: true
+port: 443
+server: api.openai.com
+trustAllServerCertificates: false
+↓GenerateJsonFormChat [transactions.JsonHttpTransaction-1686577278139]: 
+  ↑default: true
+  httpParameters: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+      - com.twinsoft.convertigo.beans.common.XMLVector: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Content-Type
+            - java.lang.String: 
+              - ↑value: application/json
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Authorization
+            - java.lang.String: 
+              - ↑value: Bearer ${lib_chatgpt.apikey.secret}
+  httpVerb: POST
+  responseTimeout: 120
+  subDir: v1/chat/completions
+  handlers: 
+    →: |
+      '
+      // Handles the transaction start event.
+      function onTransactionStarted() {
+      	const history = [];
+      	if (reset != "true") {
+      		try {
+      			const h = context.httpSession.getAttribute(''AI_history'');
+      			if (Array.isArray(h)) {
+      				h.forEach(v => history.push(v));		
+      			}
+      		} catch (e) {}
+      	}
+      	
+      	history.push({
+      		role: ''user'',
+      		content: prompt
+      	});
+      	
+      	include(''./js/sample.js'');
+      	
+      	const body = {
+      		model: ''gpt-3.5-turbo'',
+      		messages: [
+      			{
+      				role: ''user'',
+      				content: ''Only reply a form survey in JSON format, nothing else. Respect format and not other types of the following sample:\n'' +
+      				         JSON.stringify(sample) + ''\nYou have now to generate one using this input and the same language: '' + prompt
+      //				content: ''Only reply a form survey in JSON format, nothing else. You only have those types of field:'' +
+      //				         '' description, inputText, camera, checkbox, checkbox_group, radio,'' +
+      //				         '' radio_group, datetime, time, signature, barcode, slider, select,'' +
+      //				         '' file, submit, data_grid, location.'' +
+      //				         '' The form itself must have a short title and an html description,'' +
+      //				         '' that will help people that read that form the purpose.'' +
+      //				         '' Each fields that will be put in the form must have also a'' +
+      //				         '' technical id and a pretty html label.'' +
+      //				         '' If its needed you can divide the form between severals pages'' +
+      //				         '' each page have an html description and a short title.''
+      			}
+      		]
+      	};
+      	
+      //	history.forEach(v => body.messages.push(v));
+      	
+          context.connector.postQuery = JSON.stringify(body);
+          log.info("body: " + context.connector.postQuery);
+          context.httpSession.setAttribute(''AI_history'', history);
+      }
+      
+      // Handles the XML generated event.
+      function onXmlGenerated() {
+          const response = context.getXpathApi().selectSingleNode(dom, ''//content/text()'');
+          if (response != null) {
+      		let value = response.getNodeValue();
+      		value = value.replaceFirst(''^.*?(\\{[\\d\\D]*}).*?$'', ''$1'');
+      		response.getParentNode().removeChild(response);
+      	    const h = context.httpSession.getAttribute(''AI_history'');
+      	    h.push({
+      			role: ''assistant'',
+      			content: value
+      		})
+      	    log.info("response: " + h[h.length - 1].content);
+      	    context.addTextNodeUnderRoot(''response'', value);
+      	} else {
+      		context.addTextNodeUnderRoot(''response'', ''content from AI not found'');
+      	}
+      }
+      '
+  ↓prompt [variables.RequestableHttpVariable-1686658211203]: 
+    httpMethod: POST
+  ↓reset [variables.RequestableHttpVariable-1686658211206]: 
+    httpMethod: POST
+    value: true
+↓GenerateJsonFormCompletion [transactions.JsonHttpTransaction-1686577278139]: 
+  httpParameters: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+      - com.twinsoft.convertigo.beans.common.XMLVector: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Content-Type
+            - java.lang.String: 
+              - ↑value: application/json
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Authorization
+            - java.lang.String: 
+              - ↑value: Bearer ${lib_chatgpt.apikey.secret}
+  httpVerb: POST
+  responseTimeout: 120
+  subDir: v1/completions
+  handlers: 
+    →: |
+      '
+      // Handles the transaction start event.
+      function onTransactionStarted() {
+      	const history = [];
+      	if (reset != "true") {
+      		try {
+      			const h = context.httpSession.getAttribute(''AI_history'');
+      			if (Array.isArray(h)) {
+      				h.forEach(v => history.push(v));
+      			}
+      		} catch (e) { }
+      	}
+      
+      	history.push({
+      		role: ''user'',
+      		content: prompt
+      	});
+      	
+      	include(''./js/sample.js'');
+      
+      	const content = ''For the question in english ["Tell me About you"], I generate a form survey in JSON format respecting this format, types and the same language:\n'' +
+      		JSON.stringify(sample) + ''\nFor the question ["'' + prompt + ''"] I use the same format and the question language but not the same questions to generate: '';
+      
+      	const body = {
+      		model: ''text-davinci-003'',
+      		prompt: content,
+      		max_tokens: 3000
+      	};
+      
+      	context.connector.postQuery = JSON.stringify(body);
+      	log.info("body: " + context.connector.postQuery);
+      	context.httpSession.setAttribute(''AI_history'', history);
+      }
+      
+      // Handles the XML generated event.
+      function onXmlGenerated() {
+      	const response = context.getXpathApi().selectSingleNode(dom, ''//text/text()'');
+      	if (response != null) {
+      		let value = response.getNodeValue();
+      		value = value.replaceFirst(''^.*?(\\{[\\d\\D]*}).*?$'', ''$1'');
+      		response.getParentNode().removeChild(response);
+      		const h = context.httpSession.getAttribute(''AI_history'');
+      		h.push({
+      			role: ''assistant'',
+      			content: value
+      		})
+      		log.info("response: " + h[h.length - 1].content);
+      		context.addTextNodeUnderRoot(''response'', value);
+      	} else {
+      		context.addTextNodeUnderRoot(''response'', ''content from AI not found'');
+      	}
+      }
+      '
+  ↓prompt [variables.RequestableHttpVariable-1686579584287]: 
+    httpMethod: POST
+  ↓reset [variables.RequestableHttpVariable-1686579616563]: 
+    httpMethod: POST
+    value: true

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:lib_C8Oforms_AI_ns="http://www.convertigo.com/convertigo/projects/lib_C8Oforms_AI" attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://www.convertigo.com/convertigo/projects/lib_C8Oforms_AI">
+    <xsd:element name="GPT__GenerateJsonFormCompletion" type="lib_C8Oforms_AI_ns:GPT__GenerateJsonFormCompletionRequestData">
+        <xsd:annotation/>
+    </xsd:element>
+    <xsd:element name="GPT__GenerateJsonFormCompletionResponse">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="response" type="lib_C8Oforms_AI_ns:GPT__GenerateJsonFormCompletionResponseData"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:complexType name="GPT__GenerateJsonFormCompletionResponseType">
+        <xsd:sequence>
+            <xsd:element name="document" type="lib_C8Oforms_AI_ns:GPT__GenerateJsonFormCompletionResponseData"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="GPT__GenerateJsonFormCompletionRequestData">
+        <xsd:sequence>
+            <xsd:element name="prompt" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:appinfo>new variable</xsd:appinfo>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="reset" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:appinfo>new variable</xsd:appinfo>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_idType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_objectType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_createdType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_modelType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_choices_object_textType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_choices_object_indexType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_choices_object_logprobsType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_choices_object_finish_reasonType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_choices_objectType">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="text" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_choices_object_textType"/>
+            <xsd:element minOccurs="0" name="index" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_choices_object_indexType"/>
+            <xsd:element minOccurs="0" name="logprobs" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_choices_object_logprobsType"/>
+            <xsd:element minOccurs="0" name="finish_reason" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_choices_object_finish_reasonType"/>
+        </xsd:sequence>
+        <xsd:attribute default="object" name="type" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_choicesType">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="object" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_choices_objectType"/>
+        </xsd:sequence>
+        <xsd:attribute name="length" type="xsd:byte"/>
+        <xsd:attribute default="array" name="type" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_usage_prompt_tokensType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_usage_completion_tokensType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_usage_total_tokensType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_object_usageType">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="prompt_tokens" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_usage_prompt_tokensType"/>
+            <xsd:element minOccurs="0" name="completion_tokens" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_usage_completion_tokensType"/>
+            <xsd:element minOccurs="0" name="total_tokens" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_usage_total_tokensType"/>
+        </xsd:sequence>
+        <xsd:attribute default="object" name="type" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_GenerateJsonFormCompletion_document_objectType">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="id" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_idType"/>
+            <xsd:element minOccurs="0" name="object" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_objectType"/>
+            <xsd:element minOccurs="0" name="created" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_createdType"/>
+            <xsd:element minOccurs="0" name="model" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_modelType"/>
+            <xsd:element minOccurs="0" name="choices" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_choicesType"/>
+            <xsd:element minOccurs="0" name="usage" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_object_usageType"/>
+        </xsd:sequence>
+        <xsd:attribute default="object" name="type" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="GPT__GenerateJsonFormCompletionResponseData">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="object" type="lib_C8Oforms_AI_ns:GPT_GenerateJsonFormCompletion_document_objectType"/>
+            <xsd:element minOccurs="0" name="response" type="xsd:string"/>
+            <xsd:element minOccurs="0" name="error" type="lib_C8Oforms_AI_ns:ConvertigoError"/>
+        </xsd:sequence>
+        <xsd:attribute name="connector" type="xsd:string"/>
+        <xsd:attribute name="context" type="xsd:string"/>
+        <xsd:attribute name="contextId" type="xsd:string"/>
+        <xsd:attribute name="fromStub" type="xsd:boolean"/>
+        <xsd:attribute name="fromcache" type="xsd:boolean"/>
+        <xsd:attribute name="generated" type="xsd:string"/>
+        <xsd:attribute name="project" type="xsd:string"/>
+        <xsd:attribute name="sequence" type="xsd:string"/>
+        <xsd:attribute name="signature" type="xsd:long"/>
+        <xsd:attribute name="transaction" type="xsd:string"/>
+        <xsd:attribute name="version" type="xsd:string"/>
+        <xsd:attribute name="screenclass" type="xsd:string"/>
+        <xsd:attribute name="userReference" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="ConvertigoErrorContextVariable">
+        <xsd:attribute name="name" type="xsd:string"/>
+        <xsd:attribute name="value" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="ConvertigoErrorContext">
+        <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" minOccurs="0" name="variable" type="lib_C8Oforms_AI_ns:ConvertigoErrorContextVariable"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ConvertigoError">
+        <xsd:sequence minOccurs="0">
+            <xsd:element name="code" type="xsd:integer"/>
+            <xsd:element name="message" type="xsd:string"/>
+            <xsd:element name="details" type="xsd:string"/>
+            <xsd:element name="context" type="lib_C8Oforms_AI_ns:ConvertigoErrorContext"/>
+            <xsd:element name="exception" type="xsd:string"/>
+            <xsd:element name="stacktrace" type="xsd:string"/>
+        </xsd:sequence>
+        <xsd:attribute name="project" type="xsd:string"/>
+        <xsd:attribute name="connector" type="xsd:string"/>
+        <xsd:attribute name="transaction" type="xsd:string"/>
+        <xsd:attribute name="sequence" type="xsd:string"/>
+        <xsd:attribute name="type">
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                    <xsd:enumeration value="c8o"/>
+                    <xsd:enumeration value="project"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:attribute>
+    </xsd:complexType>
+</xsd:schema>
