@@ -41,13 +41,28 @@ accessibility: Hidden
         - java.lang.String: 
           - ↑value: .//response/text()
   variableName: response
+↓parseResponse [steps.SimpleStep-1686673137679]: 
+  expression: |
+    'let resp;
+    try { 
+    	resp = JSON.parse(response);
+    }
+    catch (e) { 
+    	try{
+    		resp = JSON.parse(response.substring(0, response.length -2));
+    	}
+    	catch(e){
+    		resp = ({error: response});
+    	}
+    	
+    }'
 ↓response [steps.JsonToXmlStep-1686583754061]: 
   jsonObject: 
     - xmlizable: 
       - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
       - SmartType: 
         - ↑mode: JS
-        - →→: 'try { JSON.parse(response) } catch (e) { ({error: response}) }'
+        - →→: resp
   key: 
     - xmlizable: 
       - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType

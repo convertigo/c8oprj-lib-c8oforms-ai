@@ -2,6 +2,8 @@ const sample = {
 	language: 'english',
 	question: 'Tell me About you',
 	name: 'Tell about you',
+	backgroundColor:"rgba(208,36,36,0.1)",
+	thumbnailColor:"rgba(208,36,36,1)",
 	description: 'Tell <u>more</u> about <b>YOU</b>',
 	pages: [{
 		name: 'General informations',
