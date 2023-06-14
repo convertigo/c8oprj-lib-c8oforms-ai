@@ -8,6 +8,7 @@ const sample = {
 	pages: [{
 		name: 'General informations',
 		description: '<b>General</b> informations',
+		ionicIcon:"information",
 		fields: [
 			{
 				name: 'fullname',
@@ -48,6 +49,7 @@ const sample = {
 	}, {
 		name: 'Hobbies',
 		description: 'About your <b>hobbies</b>',
+		ionicIcon:"musical-notes-outline",
 		fields: [
 			{
 				name: 'music',
