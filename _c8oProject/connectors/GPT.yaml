@@ -55,16 +55,6 @@ trustAllServerCertificates: false
       				role: ''user'',
       				content: ''Only reply a form survey in JSON format, nothing else. Respect format and not other types of the following sample:\n'' +
       				         JSON.stringify(sample) + ''\nYou have now to generate one using this input and the same language: '' + prompt
-      //				content: ''Only reply a form survey in JSON format, nothing else. You only have those types of field:'' +
-      //				         '' description, inputText, camera, checkbox, checkbox_group, radio,'' +
-      //				         '' radio_group, datetime, time, signature, barcode, slider, select,'' +
-      //				         '' file, submit, data_grid, location.'' +
-      //				         '' The form itself must have a short title and an html description,'' +
-      //				         '' that will help people that read that form the purpose.'' +
-      //				         '' Each fields that will be put in the form must have also a'' +
-      //				         '' technical id and a pretty html label.'' +
-      //				         '' If its needed you can divide the form between severals pages'' +
-      //				         '' each page have an html description and a short title.''
       			}
       		]
       	};
@@ -144,7 +134,7 @@ trustAllServerCertificates: false
       	
       	include(''./js/sample.js'');
       
-      	const content = ''For the question in english ["Tell me About you"], I generate a form survey in JSON format respecting this format, types and the same language:\n'' +
+      	const content = ''For the question in english ["Tell me About you"], I respect format and not other types of the following sample:\n'' +
       		JSON.stringify(sample) + ''\nFor the question ["'' + prompt + ''"] I use the same format and the question language but not the same questions to generate: '';
       
       	const body = {

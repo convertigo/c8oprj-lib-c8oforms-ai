@@ -73,5 +73,6 @@ accessibility: Hidden
 ↓reset [variables.RequestableVariable-1686583898968]: 
   value: true
 ↓mode [variables.RequestableVariable-1686666080783]: 
+  comment: chat or completion
   description: chat (default) or completion
   value: chat

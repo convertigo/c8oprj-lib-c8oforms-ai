@@ -94,9 +94,6 @@ comment
 <details><summary><span style="color:DarkGoldenRod"><i>Sequences</i></span></summary><blockquote><p>
 
 
-<details><summary><b>GenerateJsonForm</b></summary><blockquote><p>
-
-
 ## ![](https://github.com/convertigo/convertigo/blob/develop/engine/src/com/twinsoft/convertigo/beans/sequences/images/genericsequence_color_16x16.png?raw=true "GenericSequence") GenerateJsonForm
 
 
@@ -117,7 +114,7 @@ comment
 <img src="https://github.com/convertigo/convertigo/blob/develop/engine/src/com/twinsoft/convertigo/beans/variables/images/variable_color_16x16.png?raw=true "  alt="RequestableVariable" >&nbsp;mode
 </td>
 <td>
-
+chat or completion
 </td>
 </tr>
 <tr>
@@ -138,13 +135,4 @@ comment
 </tr>
 </table>
 
-</p></blockquote></details>
-
-<details><summary><b>Tests</b></summary><blockquote><p>
-
-
-## ![](https://github.com/convertigo/convertigo/blob/develop/engine/src/com/twinsoft/convertigo/beans/sequences/images/genericsequence_color_16x16.png?raw=true "GenericSequence") Tests
-
-
-</p></blockquote></details>
 </p></blockquote></details>
