@@ -49,9 +49,11 @@ accessibility: Hidden
     }
     catch (e) { 
     	try{
+    		log.warn("a parsing error occured on the first attempt: " + e);
     		resp = JSON.parse(response.substring(0, response.length -2));
     	}
     	catch(e){
+    		log.warn("a parsing error occured on the second attempt: " + e);
     		resp = ({error: response});
     	}
     	
