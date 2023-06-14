@@ -58,6 +58,34 @@ accessibility: Hidden
     	}
     	
     }'
+↓jIf [steps.IfStep-1686753917055]: 
+  condition: (query = resp.thumbnailFromPexelsPrompt) != undefined
+  ↓Call_Transaction [steps.TransactionStep-1686753500917]: 
+    sourceTransaction: lib_C8Oforms_AI.Pexels.search
+    ↓query [variables.StepVariable-1686753500919]: 
+    ↓per_page [variables.StepVariable-1686753500921]: 
+      value: 1
+  ↓thumbnailUrl [steps.SimpleSourceStep-1686753625869]: 
+    sourceDefinition: 
+      - xmlizable: 
+        - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+        - com.twinsoft.convertigo.beans.common.XMLVector: 
+          - java.lang.String: 
+            - ↑value: 1686753500917
+          - java.lang.String: 
+            - ↑value: ./document/object/photos/object/src/tiny/text()
+    variableName: thumbnailUrl
+  ↓addThumbnailUrl [steps.SimpleStep-1686754066356]: 
+    expression: |
+      'try {
+      	log.info("thumbnailUrl " + thumbnailUrl);
+      	if (thumbnailUrl) {
+      		resp.thumbnailUrl = thumbnailUrl;
+      		log.info("resp.thumbnailUrl " + resp.thumbnailUrl);
+      	}
+      } catch (e) {
+      	log.error("thumbnailUrl " + e);
+      }'
 ↓response [steps.JsonToXmlStep-1686583754061]: 
   jsonObject: 
     - xmlizable: 
@@ -65,6 +93,50 @@ accessibility: Hidden
       - SmartType: 
         - ↑mode: JS
         - →→: resp
+  jsonSample: |
+    '{
+    	"language": "english",
+    	"question": "Aircraft Survey",
+    	"name": "Aircraft Survey",
+    	"backgroundColor": "rgba(230,230,250,0.1)",
+    	"thumbnailFromPexelsPrompt": "aircraft in sky",
+    	"thumbnailUrl": "https://sample.org",
+    	"description": "Tell us your opinion about Aircrafts",
+    	"pages": [
+    		{
+    			"name": "General Informations",
+    			"description": "<b>General<\/b> informations",
+    			"ionicIcon": "information-circle-outline",
+    			"fields": [
+    				{
+    					"name": "fullname",
+    					"description": "What''s your <b>name<\/b>?",
+    					"type": "text",
+    					"placeholder": "Enter your name"
+    				},
+    				{
+    					"name": "age",
+    					"description": "What is your <b>age<\/b>?",
+    					"min": 0,
+    					"max": 130,
+    					"step": 1,
+    					"type": "slider"
+    				},
+    				{
+    					"name": "occupation",
+    					"description": "What is your <b>occupation<\/b>?",
+    					"type": "radio",
+    					"values": [
+    						"Student",
+    						"Employee",
+    						"Self-employed",
+    						"Unemployed"
+    					]
+    				}
+    			]
+    		}
+    	]
+    }'
   key: 
     - xmlizable: 
       - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType

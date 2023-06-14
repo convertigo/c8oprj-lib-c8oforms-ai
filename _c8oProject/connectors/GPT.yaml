@@ -22,7 +22,7 @@ trustAllServerCertificates: false
             - java.lang.String: 
               - ↑value: Authorization
             - java.lang.String: 
-              - ↑value: Bearer ${lib_chatgpt.apikey.secret}
+              - ↑value: Bearer ${lib_C8Oforms_AI.GPT.apikey.secret}
   httpVerb: POST
   responseTimeout: 120
   subDir: v1/chat/completions
@@ -47,8 +47,8 @@ trustAllServerCertificates: false
       	});
       	
       	include(''./js/sample.js'');
-      	const content = ''You are a survey expert in all domains. Only reply a form survey in JSON format, nothing else. Only use same types of fields and structure than the following sample, :\n'' +
-      				         JSON.stringify(sample) + '' \nYou have now to generate one with more pages and fields, using this input and the same language: '' + prompt + " \nBe smart and creative.";
+      	const content = ''You are a survey expert, smart and creative, in all domains. Only reply a form survey in JSON format, nothing else. Only use same types of fields and structure than the following sample, :\n'' +
+      				         JSON.stringify(sample) + '' \nYou have now to generate one with more pages and fields, using this input and its language:\n'' + prompt;
       	const body = {
       		model: ''gpt-3.5-turbo'',
       		messages: [

@@ -2,13 +2,14 @@ const sample = {
 	language: 'english',
 	question: 'Tell me About you',
 	name: 'Tell about you',
-	backgroundColor:"rgba(208,36,36,0.1)",
-	thumbnailColor:"rgba(208,36,36,1)",
+	backgroundColor: 'rgba(208,36,36,0.1)',
+	thumbnailFromPexelsPrompt: 'smilling girl',
 	description: 'Tell <u>more</u> about <b>YOU</b>',
 	pages: [{
 		name: 'General informations',
 		description: '<b>General</b> informations',
-		ionicIcon:"information",
+		ionicIcon: 'information',
+		iconFromIonicons: 'information',
 		fields: [
 			{
 				name: 'fullname',
@@ -49,7 +50,8 @@ const sample = {
 	}, {
 		name: 'Hobbies',
 		description: 'About your <b>hobbies</b>',
-		ionicIcon:"musical-notes-outline",
+		ionicIcon: 'musical-notes-outline',
+		iconFromIonicons: 'musical-notes-outline',
 		fields: [
 			{
 				name: 'music',

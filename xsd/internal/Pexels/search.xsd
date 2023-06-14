@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:lib_C8Oforms_AI_ns="http://www.convertigo.com/convertigo/projects/lib_C8Oforms_AI" attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://www.convertigo.com/convertigo/projects/lib_C8Oforms_AI">
+    <xsd:element name="Pexels__search" type="lib_C8Oforms_AI_ns:Pexels__searchRequestData">
+        <xsd:annotation/>
+    </xsd:element>
+    <xsd:element name="Pexels__searchResponse">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="response" type="lib_C8Oforms_AI_ns:Pexels__searchResponseData"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:complexType name="Pexels__searchResponseType">
+        <xsd:sequence>
+            <xsd:element name="document" type="lib_C8Oforms_AI_ns:Pexels__searchResponseData"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels__searchRequestData">
+        <xsd:sequence>
+            <xsd:element name="query" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:appinfo>new variable</xsd:appinfo>
+                </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="per_page" type="xsd:string">
+                <xsd:annotation>
+                    <xsd:appinfo>new variable</xsd:appinfo>
+                </xsd:annotation>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_pageType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_per_pageType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_idType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_widthType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_heightType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_urlType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_photographerType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_photographer_urlType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_photographer_idType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_avg_colorType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_src_originalType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_src_large2xType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_src_largeType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_src_mediumType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_src_smallType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_src_portraitType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_src_landscapeType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_src_tinyType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_srcType">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="original" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_src_originalType"/>
+            <xsd:element minOccurs="0" name="large2x" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_src_large2xType"/>
+            <xsd:element minOccurs="0" name="large" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_src_largeType"/>
+            <xsd:element minOccurs="0" name="medium" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_src_mediumType"/>
+            <xsd:element minOccurs="0" name="small" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_src_smallType"/>
+            <xsd:element minOccurs="0" name="portrait" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_src_portraitType"/>
+            <xsd:element minOccurs="0" name="landscape" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_src_landscapeType"/>
+            <xsd:element minOccurs="0" name="tiny" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_src_tinyType"/>
+        </xsd:sequence>
+        <xsd:attribute default="object" name="type" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_likedType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_object_altType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photos_objectType">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="id" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_idType"/>
+            <xsd:element minOccurs="0" name="width" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_widthType"/>
+            <xsd:element minOccurs="0" name="height" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_heightType"/>
+            <xsd:element minOccurs="0" name="url" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_urlType"/>
+            <xsd:element minOccurs="0" name="photographer" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_photographerType"/>
+            <xsd:element minOccurs="0" name="photographer_url" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_photographer_urlType"/>
+            <xsd:element minOccurs="0" name="photographer_id" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_photographer_idType"/>
+            <xsd:element minOccurs="0" name="avg_color" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_avg_colorType"/>
+            <xsd:element minOccurs="0" name="src" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_srcType"/>
+            <xsd:element minOccurs="0" name="liked" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_likedType"/>
+            <xsd:element minOccurs="0" name="alt" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_object_altType"/>
+        </xsd:sequence>
+        <xsd:attribute default="object" name="type" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_photosType">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="object" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photos_objectType"/>
+        </xsd:sequence>
+        <xsd:attribute name="length" type="xsd:byte"/>
+        <xsd:attribute default="array" name="type" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_total_resultsType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_object_next_pageType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels_search_document_objectType">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="page" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_pageType"/>
+            <xsd:element minOccurs="0" name="per_page" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_per_pageType"/>
+            <xsd:element minOccurs="0" name="photos" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_photosType"/>
+            <xsd:element minOccurs="0" name="total_results" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_total_resultsType"/>
+            <xsd:element minOccurs="0" name="next_page" type="lib_C8Oforms_AI_ns:Pexels_search_document_object_next_pageType"/>
+        </xsd:sequence>
+        <xsd:attribute default="object" name="type" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="Pexels__searchResponseData">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="object" type="lib_C8Oforms_AI_ns:Pexels_search_document_objectType"/>
+            <xsd:element minOccurs="0" name="error" type="lib_C8Oforms_AI_ns:ConvertigoError"/>
+        </xsd:sequence>
+        <xsd:attribute name="connector" type="xsd:string"/>
+        <xsd:attribute name="context" type="xsd:string"/>
+        <xsd:attribute name="contextId" type="xsd:string"/>
+        <xsd:attribute name="fromStub" type="xsd:boolean"/>
+        <xsd:attribute name="fromcache" type="xsd:boolean"/>
+        <xsd:attribute name="generated" type="xsd:string"/>
+        <xsd:attribute name="project" type="xsd:string"/>
+        <xsd:attribute name="sequence" type="xsd:string"/>
+        <xsd:attribute name="signature" type="xsd:long"/>
+        <xsd:attribute name="transaction" type="xsd:string"/>
+        <xsd:attribute name="version" type="xsd:string"/>
+        <xsd:attribute name="screenclass" type="xsd:string"/>
+        <xsd:attribute name="userReference" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="ConvertigoErrorContextVariable">
+        <xsd:attribute name="name" type="xsd:string"/>
+        <xsd:attribute name="value" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="ConvertigoErrorContext">
+        <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" minOccurs="0" name="variable" type="lib_C8Oforms_AI_ns:ConvertigoErrorContextVariable"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ConvertigoError">
+        <xsd:sequence minOccurs="0">
+            <xsd:element name="code" type="xsd:integer"/>
+            <xsd:element name="message" type="xsd:string"/>
+            <xsd:element name="details" type="xsd:string"/>
+            <xsd:element name="context" type="lib_C8Oforms_AI_ns:ConvertigoErrorContext"/>
+            <xsd:element name="exception" type="xsd:string"/>
+            <xsd:element name="stacktrace" type="xsd:string"/>
+        </xsd:sequence>
+        <xsd:attribute name="project" type="xsd:string"/>
+        <xsd:attribute name="connector" type="xsd:string"/>
+        <xsd:attribute name="transaction" type="xsd:string"/>
+        <xsd:attribute name="sequence" type="xsd:string"/>
+        <xsd:attribute name="type">
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                    <xsd:enumeration value="c8o"/>
+                    <xsd:enumeration value="project"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:attribute>
+    </xsd:complexType>
+</xsd:schema>

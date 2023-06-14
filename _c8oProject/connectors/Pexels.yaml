@@ -1,0 +1,33 @@
+https: true
+port: 443
+server: api.pexels.com
+trustAllServerCertificates: false
+↓search [transactions.JsonHttpTransaction-1686746316080]: 
+  ↑default: true
+  httpParameters: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+      - com.twinsoft.convertigo.beans.common.XMLVector: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Content-Type
+            - java.lang.String: 
+              - ↑value: application/json
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Authorization
+            - java.lang.String: 
+              - ↑value: ${lib_C8Oforms_AI.Pexels.token.secret}
+  subDir: v1/search
+  ↓Test_Case [core.TestCase-1686753133720]: 
+    ↓query [variables.TestCaseVariable-1686753249489]: 
+      value: aircraft
+    ↓per_page [variables.TestCaseVariable-1686753249492]: 
+      value: 1
+  ↓query [variables.RequestableHttpVariable-1686753249495]: 
+  ↓per_page [variables.RequestableHttpVariable-1686753249498]: 
+    value: 1
