@@ -47,14 +47,14 @@ trustAllServerCertificates: false
       	});
       	
       	include(''./js/sample.js'');
-      	
+      	const content = ''You are a survey expert in all domains. Only reply a form survey in JSON format, nothing else. Only use same types of fields and structure than the following sample, :\n'' +
+      				         JSON.stringify(sample) + '' \nYou have now to generate one with more pages and fields, using this input and the same language: '' + prompt + " \nBe smart and creative.";
       	const body = {
       		model: ''gpt-3.5-turbo'',
       		messages: [
       			{
       				role: ''user'',
-      				content: ''Only reply a form survey in JSON format, nothing else. Respect format and not other types of the following sample:\n'' +
-      				         JSON.stringify(sample) + ''\nYou have now to generate one using this input and the same language: '' + prompt
+      				content
       			}
       		]
       	};
