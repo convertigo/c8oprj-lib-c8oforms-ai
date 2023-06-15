@@ -144,6 +144,7 @@ accessibility: Hidden
         - ↑mode: PLAIN
         - →→: response
 ↓prompt [variables.RequestableVariable-1686583898966]: 
+  value: Génère moi un formulaire d'embauche, ce formulaire sera utilisé pour recueillir des informations sur un nouvel employé, y compris ses coordonnées, ses antécédents professionnels et son niveau d'éducation.
 ↓reset [variables.RequestableVariable-1686583898968]: 
   value: true
 ↓mode [variables.RequestableVariable-1686666080783]: 
