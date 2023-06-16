@@ -24,7 +24,7 @@ trustAllServerCertificates: false
             - java.lang.String: 
               - ↑value: Bearer ${lib_C8Oforms_AI.GPT.apikey.secret}
   httpVerb: POST
-  responseTimeout: 120
+  responseTimeout: 240
   subDir: v1/chat/completions
   handlers: 
     →: |
@@ -110,7 +110,7 @@ trustAllServerCertificates: false
             - java.lang.String: 
               - ↑value: Bearer ${lib_chatgpt.apikey.secret}
   httpVerb: POST
-  responseTimeout: 120
+  responseTimeout: 240
   subDir: v1/completions
   handlers: 
     →: |

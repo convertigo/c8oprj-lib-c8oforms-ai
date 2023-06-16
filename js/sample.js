@@ -10,6 +10,7 @@ const sample = {
 		description: '<b>General</b> informations',
 		ionicIcon: 'information',
 		iconFromIonicons: 'information',
+		bannerFromPexelsPrompt: 'paper sheet with a pen',
 		fields: [
 			{
 				name: 'fullname',
@@ -52,6 +53,7 @@ const sample = {
 		description: 'About your <b>hobbies</b>',
 		ionicIcon: 'musical-notes-outline',
 		iconFromIonicons: 'musical-notes-outline',
+		bannerFromPexelsPrompt: 'listen music at restaurant',
 		fields: [
 			{
 				name: 'music',
@@ -71,6 +73,11 @@ const sample = {
 				type: 'checkbox_group',
 				columns: ['week', 'week-end'],
 				rows: ['noddle', 'rice', 'burger', 'pizza']
+			}, {
+				name: 'agree',
+				description: '',
+				type: 'checkbox',
+				values: ['I agree to send <b>results</b>']
 			}
 		],
 	}]

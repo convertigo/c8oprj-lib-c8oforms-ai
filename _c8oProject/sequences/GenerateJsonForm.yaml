@@ -1,4 +1,5 @@
 accessibility: Hidden
+responseTimeout: 300
 ↓complex [steps.XMLComplexStep-1686666123498]: 
   output: false
   ↓jIfThenElse [steps.IfThenElseStep-1686666146311]: 
@@ -43,7 +44,10 @@ accessibility: Hidden
   variableName: response
 ↓parseResponse [steps.SimpleStep-1686673137679]: 
   expression: |
-    'let resp;
+    '//include(''./js/sample.js'');
+    //response = JSON.stringify(sample);
+    
+    let resp;
     try { 
     	resp = JSON.parse(response);
     }
@@ -86,6 +90,36 @@ accessibility: Hidden
       } catch (e) {
       	log.error("thumbnailUrl " + e);
       }'
+↓jIterator [steps.SimpleIteratorStep-1686923684472]: 
+  expression: resp.pages
+  ↓jIf [steps.IfStep-1686923717345]: 
+    condition: (query = item.bannerFromPexelsPrompt) != undefined
+    ↓Call_Transaction [steps.TransactionStep-1686923717348]: 
+      sourceTransaction: lib_C8Oforms_AI.Pexels.search
+      ↓query [variables.StepVariable-1686923717351]: 
+      ↓per_page [variables.StepVariable-1686923717354]: 
+        value: 1
+    ↓bannerUrl [steps.SimpleSourceStep-1686923717357]: 
+      sourceDefinition: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: 1686923717348
+            - java.lang.String: 
+              - ↑value: ./document/object/photos/object/src/landscape/text()
+      variableName: bannerUrl
+    ↓addBannerUrl [steps.SimpleStep-1686923717360]: 
+      expression: |
+        'try {
+        	log.info("bannerUrl " + bannerUrl);
+        	if (bannerUrl) {
+        		item.bannerUrl = bannerUrl;
+        		log.info("banner  item.bannerUrl " + item.bannerUrl);
+        	}
+        } catch (e) {
+        	log.error("bannerUrl " + e);
+        }'
 ↓response [steps.JsonToXmlStep-1686583754061]: 
   jsonObject: 
     - xmlizable: 
