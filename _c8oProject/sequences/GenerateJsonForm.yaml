@@ -113,9 +113,13 @@ responseTimeout: 300
       expression: |
         'try {
         	log.info("bannerUrl " + bannerUrl);
-        	if (bannerUrl) {
-        		item.bannerUrl = bannerUrl;
-        		log.info("banner  item.bannerUrl " + item.bannerUrl);
+        	if (bannerUrl && item.fields) {
+        		item.fields.unshift({
+        			name: ''banner'',
+        			description: ''<img src="'' + bannerUrl + ''" width="100%" alt="'' + query + ''" />'',
+        			type: ''description''
+        		});
+        		log.info("banner  item.fields[0].description " + item.fields[0].description);
         	}
         } catch (e) {
         	log.error("bannerUrl " + e);
