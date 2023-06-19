@@ -1,7 +1,7 @@
 ↑default: true
 https: true
 port: 443
-server: api.openai.com
+server: ${lib_C8Oforms_AI.GPT.server=api.openai.com}
 trustAllServerCertificates: false
 ↓GenerateJsonFormChat [transactions.JsonHttpTransaction-1686577278139]: 
   ↑default: true
