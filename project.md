@@ -36,6 +36,14 @@ comment
 </tr>
 <tr>
 <td>
+<img src="https://github.com/convertigo/convertigo/blob/develop/engine/src/com/twinsoft/convertigo/beans/variables/images/variable_color_16x16.png?raw=true "  alt="RequestableHttpVariable" >&nbsp;model
+</td>
+<td>
+
+</td>
+</tr>
+<tr>
+<td>
 <img src="https://github.com/convertigo/convertigo/blob/develop/engine/src/com/twinsoft/convertigo/beans/variables/images/variable_color_16x16.png?raw=true "  alt="RequestableHttpVariable" >&nbsp;prompt
 </td>
 <td>

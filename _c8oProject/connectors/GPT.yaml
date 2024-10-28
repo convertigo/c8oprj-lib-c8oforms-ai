@@ -50,7 +50,7 @@ trustAllServerCertificates: false
       	const content = ''You are a survey expert, smart and creative, in all domains. Only reply a form survey in JSON format, nothing else. Only use same types of fields (other types are forbidden), and structure than the following sample :\n'' +
       				         JSON.stringify(sample) + '' \nYou have now to generate one with more pages and fields, using this input and its language, except for thumbnailFromPexelsPrompt field that has to be in english:\n'' + prompt;
       	const body = {
-      		model: ''gpt-3.5-turbo'',
+      		model: model,
       		messages: [
       			{
       				role: ''user'',
@@ -90,6 +90,9 @@ trustAllServerCertificates: false
   ↓reset [variables.RequestableHttpVariable-1686658211206]: 
     httpMethod: POST
     value: true
+  ↓model [variables.RequestableHttpVariable-1711132098790]: 
+    httpMethod: POST
+    value: ${lib_C8Oforms_AI.model=}
 ↓GenerateJsonFormCompletion [transactions.JsonHttpTransaction-1686577278139]: 
   httpParameters: 
     - xmlizable: 

@@ -26,13 +26,13 @@ For more technical informations : [documentation](./project.md)
      <tr><td>To contribute</td><td>
 
      ```
-     lib_C8Oforms_AI=git@github.com:convertigo/c8oprj-lib-c8oforms-ai.git:branch=main
+     lib_C8Oforms_AI=https://github.com/convertigo/c8oprj-lib-c8oforms-ai.git:branch=main
      ```
      </td></tr>
      <tr><td>To simply use</td><td>
 
      ```
-     lib_C8Oforms_AI=git@github.com:convertigo/c8oprj-lib-c8oforms-ai/archive/main.zip
+     lib_C8Oforms_AI=https://github.com/convertigo/c8oprj-lib-c8oforms-ai/archive/main.zip
      ```
      </td></tr>
     </table>
