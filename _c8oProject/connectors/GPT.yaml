@@ -31,55 +31,31 @@ trustAllServerCertificates: false
       '
       // Handles the transaction start event.
       function onTransactionStarted() {
-      	const history = [];
-      	if (reset != "true") {
-      		try {
-      			const h = context.httpSession.getAttribute(''AI_history'');
-      			if (Array.isArray(h)) {
-      				h.forEach(v => history.push(v));		
-      			}
-      		} catch (e) {}
-      	}
-      	
-      	history.push({
+      	include(''./js/sample.js'');
+      	const messages = [{
+      		role: ''system'',
+      		content: ''Hello! I am a survey expert, smart and creative, in all domains. Only reply a form survey in JSON format, nothing else. Only use same types of fields (other types are forbidden), and structure than the following sample :\n'' +
+      			JSON.stringify(sample) + '' \nYou have now to generate one with more pages and fields, using this input and its language, except for thumbnailFromPexelsPrompt field that has to be in english.''
+      	}, {
       		role: ''user'',
       		content: prompt
-      	});
+      	}];
       	
-      	include(''./js/sample.js'');
-      	const content = ''You are a survey expert, smart and creative, in all domains. Only reply a form survey in JSON format, nothing else. Only use same types of fields (other types are forbidden), and structure than the following sample :\n'' +
-      				         JSON.stringify(sample) + '' \nYou have now to generate one with more pages and fields, using this input and its language, except for thumbnailFromPexelsPrompt field that has to be in english:\n'' + prompt;
       	const body = {
       		model: model,
-      		messages: [
-      			{
-      				role: ''user'',
-      				content
-      			}
-      		]
+      		response_format: {"type": "json_object"},
+      		messages: messages
       	};
       	
-      //	history.forEach(v => body.messages.push(v));
-      	
-          context.connector.postQuery = JSON.stringify(body);
-          log.info("body: " + context.connector.postQuery);
-          context.httpSession.setAttribute(''AI_history'', history);
+      	context.connector.postQuery = JSON.stringify(body);
+      	log.info("body: " + context.connector.postQuery);
       }
       
       // Handles the XML generated event.
       function onXmlGenerated() {
-          const response = context.getXpathApi().selectSingleNode(dom, ''//content/text()'');
-          if (response != null) {
-      		let value = response.getNodeValue();
-      		value = value.replaceFirst(''^.*?(\\{[\\d\\D]*}).*?$'', ''$1'');
-      		response.getParentNode().removeChild(response);
-      	    const h = context.httpSession.getAttribute(''AI_history'');
-      	    h.push({
-      			role: ''assistant'',
-      			content: value
-      		})
-      	    log.info("response: " + h[h.length - 1].content);
-      	    context.addTextNodeUnderRoot(''response'', value);
+      	const response = context.getXpathApi().selectSingleNode(dom, ''//content/text()'');
+      	if (response != null) {
+      		context.addTextNodeUnderRoot(''response'', response.getNodeValue());
       	} else {
       		context.addTextNodeUnderRoot(''response'', ''content from AI not found'');
       	}
@@ -87,13 +63,10 @@ trustAllServerCertificates: false
       '
   ↓prompt [variables.RequestableHttpVariable-1686658211203]: 
     httpMethod: POST
-  ↓reset [variables.RequestableHttpVariable-1686658211206]: 
-    httpMethod: POST
-    value: true
   ↓model [variables.RequestableHttpVariable-1711132098790]: 
     httpMethod: POST
-    value: ${lib_C8Oforms_AI.model=}
-↓GenerateJsonFormCompletion [transactions.JsonHttpTransaction-1686577278139]: 
+    value: ${lib_C8Oforms_AI.GPT.model=gpt-4o}
+↓UpdateJsonFormChat [transactions.JsonHttpTransaction-1686577278139]: 
   httpParameters: 
     - xmlizable: 
       - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
@@ -111,67 +84,43 @@ trustAllServerCertificates: false
             - java.lang.String: 
               - ↑value: Authorization
             - java.lang.String: 
-              - ↑value: Bearer ${lib_chatgpt.apikey.secret}
+              - ↑value: Bearer ${lib_C8Oforms_AI.GPT.apikey.secret}
   httpVerb: POST
   responseTimeout: 240
-  subDir: v1/completions
+  subDir: v1/chat/completions
   handlers: 
     →: |
       '
       // Handles the transaction start event.
       function onTransactionStarted() {
-      	const history = [];
-      	if (reset != "true") {
-      		try {
-      			const h = context.httpSession.getAttribute(''AI_history'');
-      			if (Array.isArray(h)) {
-      				h.forEach(v => history.push(v));
-      			}
-      		} catch (e) { }
-      	}
-      
-      	history.push({
-      		role: ''user'',
-      		content: prompt
+      	messages = JSON.parse(messages);
+      	messages.unshift({
+      		role: ''system'',
+      		content: ''Hello! I am a survey expert, smart and creative, in all domains. ''
+      			+ ''Only use same types of fields (other types are forbidden) of the input survey. ''
+      			+ ''You have to edit it without any other modifications. Please keep all existing values. ''
+      			+ ''You can edit, add or remove pages and fields, using the user input and its language. ''
+      			+ ''If you have to add new "description" instead of "<img>", insert in "html" the value "pexel:" + english prompt, I will replace after. ''
+      			+ ''Please create or update a root "chatSummary" key that resume the existing value and all the conversation with the user. ''
+      			+ ''Also add a root "chatResponse" key with some words for the user in its language.''
       	});
       	
-      	include(''./js/sample.js'');
-      
-      	const content = ''For the question in english ["Tell me About you"], I respect format and not other types of the following sample:\n'' +
-      		JSON.stringify(sample) + ''\nFor the question ["'' + prompt + ''"] I use the same format and the question language but not the same questions to generate: '';
-      
+      	messages[messages.length - 1].content += ''\n\n'' + formJSON;
+      	
       	const body = {
-      		model: ''text-davinci-003'',
-      		prompt: content,
-      		max_tokens: 3000
+      		model: model,
+      		response_format: {type: ''json_object''},
+      		messages: messages
       	};
-      
+      		
       	context.connector.postQuery = JSON.stringify(body);
-      	log.info("body: " + context.connector.postQuery);
-      	context.httpSession.setAttribute(''AI_history'', history);
-      }
-      
-      // Handles the XML generated event.
-      function onXmlGenerated() {
-      	const response = context.getXpathApi().selectSingleNode(dom, ''//text/text()'');
-      	if (response != null) {
-      		let value = response.getNodeValue();
-      		value = value.replaceFirst(''^.*?(\\{[\\d\\D]*}).*?$'', ''$1'');
-      		response.getParentNode().removeChild(response);
-      		const h = context.httpSession.getAttribute(''AI_history'');
-      		h.push({
-      			role: ''assistant'',
-      			content: value
-      		})
-      		log.info("response: " + h[h.length - 1].content);
-      		context.addTextNodeUnderRoot(''response'', value);
-      	} else {
-      		context.addTextNodeUnderRoot(''response'', ''content from AI not found'');
-      	}
+      	log.info(''body: '' + context.connector.postQuery);
       }
       '
-  ↓prompt [variables.RequestableHttpVariable-1686579584287]: 
+  ↓prompt [variables.RequestableHttpVariable-1730221703841]: 
     httpMethod: POST
-  ↓reset [variables.RequestableHttpVariable-1686579616563]: 
+  ↓model [variables.RequestableHttpVariable-1730221703847]: 
     httpMethod: POST
-    value: true
+    value: ${lib_C8Oforms_AI.GPT.model=gpt-4o}
+  ↓formJSON [variables.RequestableHttpVariable-1730221775325]: 
+    httpMethod: POST

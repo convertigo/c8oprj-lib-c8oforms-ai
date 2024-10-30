@@ -1,0 +1,243 @@
+authenticatedContextRequired: true
+↓Init [steps.SimpleStep-1730201015361]: 
+  expression: |
+    //java.lang.Thread.sleep(2000);
+    _use_docid = (form_id += "");
+    message += "";
+↓jIf [steps.IfStep-1730219295153]: 
+  condition: reset == "true"
+  ↓Remove_from_session [steps.SessionRemoveStep-1730219272980]: 
+    key: getLastAiChat
+↓getLastAiChat [steps.SessionGetObjectStep-1730217433576]: 
+  key: getLastAiChat
+  output: false
+↓form [steps.JsonObjectStep-1730218013371]: 
+  key: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: PLAIN
+        - →→: form
+  ↓id [steps.JsonFieldStep-1730218025555]: 
+    key: 
+      - xmlizable: 
+        - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+        - SmartType: 
+          - ↑mode: PLAIN
+          - →→: id
+    value: 
+      - xmlizable: 
+        - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+        - SmartType: 
+          - ↑mode: JS
+          - →→: form_id
+  ↓messages [steps.JsonArrayStep-1730198231534]: 
+    key: 
+      - xmlizable: 
+        - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+        - SmartType: 
+          - ↑mode: PLAIN
+          - →→: messages
+    ↓Copy [steps.XMLCopyStep-1730217641636]: 
+      sourceDefinition: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: 1730217433576
+            - java.lang.String: 
+              - ↑value: ./form[id = "{{{ form_id }}}"]/messages/*
+    ↓IfExistThenElse [steps.IfExistThenElseStep-1730218092499]: 
+      sourceDefinition: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: 1730217641636
+            - java.lang.String: 
+              - ↑value: ./*
+      ↓jThen [steps.ThenStep-1730218094728]: 
+      ↓jElse [steps.ElseStep-1730218094730]: 
+        ↓object [steps.JsonObjectStep-1730198240949]: 
+          ↓role [steps.JsonFieldStep-1730198252616]: 
+            key: 
+              - xmlizable: 
+                - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                - SmartType: 
+                  - ↑mode: PLAIN
+                  - →→: role
+            value: 
+              - xmlizable: 
+                - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                - SmartType: 
+                  - ↑mode: PLAIN
+                  - →→: assistant
+          ↓content [steps.JsonFieldStep-1730198309056]: 
+            key: 
+              - xmlizable: 
+                - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                - SmartType: 
+                  - ↑mode: PLAIN
+                  - →→: content
+            value: 
+              - xmlizable: 
+                - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                - SmartType: 
+                  - ↑mode: PLAIN
+                  - →→: How do you want to modify this form?
+    ↓jIf [steps.IfStep-1730218231437]: 
+      condition: message.length > 0
+      ↓object1 [steps.JsonObjectStep-1730198361390]: 
+        ↓role [steps.JsonFieldStep-1730198361393]: 
+          key: 
+            - xmlizable: 
+              - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+              - SmartType: 
+                - ↑mode: PLAIN
+                - →→: role
+          value: 
+            - xmlizable: 
+              - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+              - SmartType: 
+                - ↑mode: PLAIN
+                - →→: user
+        ↓content [steps.JsonFieldStep-1730198361396]: 
+          key: 
+            - xmlizable: 
+              - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+              - SmartType: 
+                - ↑mode: PLAIN
+                - →→: content
+          value: 
+            - xmlizable: 
+              - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+              - SmartType: 
+                - ↑mode: JS
+                - →→: message
+      ↓jIf [steps.IfStep-1730218812971]: 
+        condition: form_id.length > 0
+        ↓messages [steps.JsonSourceStep-1730281118907]: 
+          sourceDefinition: 
+            - xmlizable: 
+              - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+              - com.twinsoft.convertigo.beans.common.XMLVector: 
+                - java.lang.String: 
+                  - ↑value: 1730198231534
+                - java.lang.String: 
+                  - ↑value: .
+          variableName: messages
+        ↓getForm [steps.SimpleStep-1730281490676]: 
+          expression: |
+            messages = JSON.stringify(messages.filter(o => o.role));
+            
+            const fsClient = com.twinsoft.convertigo.engine.Engine.theApp.couchDbManager.getFullSyncClient();
+            formJSON = '' + fsClient.getDocument('c8oforms_fs', form_id);
+            
+        ↓debug [steps.LogStep-1730281204592]: 
+          expression: JSON.stringify(messages) + "\n" + JSON.stringify(formJSON)
+          level: WARN
+        ↓Call_Transaction1 [steps.TransactionStep-1730281616890]: 
+          sourceTransaction: lib_C8Oforms_AI.GPT.UpdateJsonFormChat
+          ↓messages [variables.StepVariable-1730281616892]: 
+          ↓model [variables.StepVariable-1730281616894]: 
+            value: gpt-4o
+          ↓formJSON [variables.StepVariable-1730281616896]: 
+        ↓IfExistThenElse [steps.IfExistThenElseStep-1730285553196]: 
+          sourceDefinition: 
+            - xmlizable: 
+              - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+              - com.twinsoft.convertigo.beans.common.XMLVector: 
+                - java.lang.String: 
+                  - ↑value: 1730281616890
+                - java.lang.String: 
+                  - ↑value: ./document/object/choices/object/message/content
+          ↓jThen [steps.ThenStep-1730285555306]: 
+            ↓content [steps.SimpleSourceStep-1730285763077]: 
+              sourceDefinition: 
+                - xmlizable: 
+                  - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+                  - com.twinsoft.convertigo.beans.common.XMLVector: 
+                    - java.lang.String: 
+                      - ↑value: 1730281616890
+                    - java.lang.String: 
+                      - ↑value: ./document/object/choices/object/message/content/text()
+              variableName: content
+            ↓updateForm [steps.SimpleStep-1730285829019]: 
+              expression: |
+                content = JSON.parse(content);
+                response = '' + content.chatResponse;
+                delete content.chatResponse;
+                const doc = new org.codehaus.jettison.json.JSONObject(JSON.stringify(content));
+                const policy = com.twinsoft.convertigo.engine.enums.CouchPostDocumentPolicy.override;
+                fsClient.postDocument('c8oforms_fs', doc, null, policy, false);
+            ↓object [steps.JsonObjectStep-1730285666940]: 
+              ↓role [steps.JsonFieldStep-1730285666943]: 
+                key: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: role
+                value: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: assistant
+              ↓content [steps.JsonFieldStep-1730285666946]: 
+                key: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: content
+                value: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: JS
+                      - →→: response
+          ↓jElse [steps.ElseStep-1730285555308]: 
+            ↓object [steps.JsonObjectStep-1730285610886]: 
+              ↓role [steps.JsonFieldStep-1730285610889]: 
+                key: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: role
+                value: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: assistant
+              ↓content [steps.JsonFieldStep-1730285610892]: 
+                key: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: content
+                value: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: Sorry but there is something wrong :(
+↓setLastAiChat [steps.SessionSetObjectStep-1730217529527]: 
+  key: getLastAiChat
+  value: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: SOURCE
+        - com.twinsoft.convertigo.beans.common.XMLVector: 
+          - java.lang.String: 
+            - ↑value: 1730218013371
+          - java.lang.String: 
+            - ↑value: .
+↓form_id [variables.RequestableVariable-1730198178820]: 
+↓message [variables.RequestableVariable-1730198208348]: 
+↓reset [variables.RequestableVariable-1730219231423]: 
+  value: false
