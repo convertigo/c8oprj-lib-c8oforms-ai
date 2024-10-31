@@ -93,15 +93,27 @@ trustAllServerCertificates: false
       '
       // Handles the transaction start event.
       function onTransactionStarted() {
+      	const c8oForms = com.twinsoft.convertigo.engine.Engine.theApp.databaseObjectsManager.getOriginalProjectByName("C8Oforms");
+      	let allTypes = false;
+      	if (c8oForms != null) {
+      		const allTypesFile = new java.io.File(c8oForms.getDirFile(), ''DisplayObjects/mobile/assets/components/AllTypes.json'');
+      		if (allTypesFile.exists()) {
+      			allTypes = org.apache.commons.io.FileUtils.readFileToString(allTypesFile, ''UTF-8'');
+      		}
+      	}
+      
+      	
       	messages = JSON.parse(messages);
       	messages.unshift({
       		role: ''system'',
-      		content: ''Hello! I am a survey expert, smart and creative, in all domains. ''
-      			+ ''Only use same types of fields (other types are forbidden) of the input survey. ''
-      			+ ''You have to edit it without any other modifications. Please keep all existing values. ''
-      			+ ''You can edit, add or remove pages and fields, using the user input and its language. ''
+      		content: ''You are a survey expert, smart and creative, in all domains. ''
+      			+ ''Only use same types of fields (other types are forbidden) from this array: \n''
+      			+ allTypes + ''\n''
+      			+ ''You have to edit the input user survey without any other modifications. Please keep all existing keys and values of the user\''s JSON. ''
+      			+ ''You can edit, add or remove "pages", "formulaire" and "chatSummary", using the user input prompt and its language. ''
+      			+ ''For new fields and pages, generate unique "id" and use their reference logically.''
       			+ ''If you have to add new "description" instead of "<img>", insert in "html" the value "pexel:" + english prompt, I will replace after. ''
-      			+ ''Please create or update a root "chatSummary" key that resume the existing value and all the conversation with the user. ''
+      			+ ''Please create or update a root "chatSummary" key that do a short condensed summary of the whole conversation with the user, like if the user ask for this survey at once. ''
       			+ ''Also add a root "chatResponse" key with some words for the user in its language.''
       	});
       	

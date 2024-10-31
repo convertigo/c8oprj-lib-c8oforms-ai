@@ -1,9 +1,30 @@
 authenticatedContextRequired: true
 ↓Init [steps.SimpleStep-1730201015361]: 
   expression: |
-    //java.lang.Thread.sleep(2000);
+    '//java.lang.Thread.sleep(2000);
     _use_docid = (form_id += "");
     message += "";
+    content = "How do you want to modify this form?";
+    
+    const i18n = {
+        "fr": "Comment souhaitez-vous modifier ce formulaire ?",
+        "it": "Come vuoi modificare questo modulo?",
+        "es": "¿Cómo deseas modificar este formulario?"
+    };
+    
+    if (language in i18n) {
+    	content = i18n[language];
+    }
+    
+    form = false;'
+↓jIf1 [steps.IfStep-1730385864567]: 
+  condition: form_id.length > 0
+  ↓getForm [steps.SimpleStep-1730385864573]: 
+    expression: |
+      const fsClient = com.twinsoft.convertigo.engine.Engine.theApp.couchDbManager.getFullSyncClient();
+      formJSON = '' + fsClient.getDocument('c8oforms_fs', form_id);
+      form = JSON.parse(formJSON);
+      
 ↓jIf [steps.IfStep-1730219295153]: 
   condition: reset == "true"
   ↓Remove_from_session [steps.SessionRemoveStep-1730219272980]: 
@@ -58,6 +79,35 @@ authenticatedContextRequired: true
               - ↑value: ./*
       ↓jThen [steps.ThenStep-1730218094728]: 
       ↓jElse [steps.ElseStep-1730218094730]: 
+        ↓jIf [steps.IfStep-1730386145593]: 
+          condition: '"chatSummary" in form'
+          ↓object [steps.JsonObjectStep-1730386183553]: 
+            ↓role [steps.JsonFieldStep-1730386183556]: 
+              key: 
+                - xmlizable: 
+                  - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                  - SmartType: 
+                    - ↑mode: PLAIN
+                    - →→: role
+              value: 
+                - xmlizable: 
+                  - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                  - SmartType: 
+                    - ↑mode: PLAIN
+                    - →→: user
+            ↓content [steps.JsonFieldStep-1730386183559]: 
+              key: 
+                - xmlizable: 
+                  - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                  - SmartType: 
+                    - ↑mode: PLAIN
+                    - →→: content
+              value: 
+                - xmlizable: 
+                  - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                  - SmartType: 
+                    - ↑mode: JS
+                    - →→: form.chatSummary
         ↓object [steps.JsonObjectStep-1730198240949]: 
           ↓role [steps.JsonFieldStep-1730198252616]: 
             key: 
@@ -83,8 +133,8 @@ authenticatedContextRequired: true
               - xmlizable: 
                 - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
                 - SmartType: 
-                  - ↑mode: PLAIN
-                  - →→: How do you want to modify this form?
+                  - ↑mode: JS
+                  - →→: content
     ↓jIf [steps.IfStep-1730218231437]: 
       condition: message.length > 0
       ↓object1 [steps.JsonObjectStep-1730198361390]: 
@@ -115,7 +165,7 @@ authenticatedContextRequired: true
                 - ↑mode: JS
                 - →→: message
       ↓jIf [steps.IfStep-1730218812971]: 
-        condition: form_id.length > 0
+        condition: form != false
         ↓messages [steps.JsonSourceStep-1730281118907]: 
           sourceDefinition: 
             - xmlizable: 
@@ -126,16 +176,10 @@ authenticatedContextRequired: true
                 - java.lang.String: 
                   - ↑value: .
           variableName: messages
-        ↓getForm [steps.SimpleStep-1730281490676]: 
+        ↓filterMessages [steps.SimpleStep-1730281490676]: 
           expression: |
             messages = JSON.stringify(messages.filter(o => o.role));
             
-            const fsClient = com.twinsoft.convertigo.engine.Engine.theApp.couchDbManager.getFullSyncClient();
-            formJSON = '' + fsClient.getDocument('c8oforms_fs', form_id);
-            
-        ↓debug [steps.LogStep-1730281204592]: 
-          expression: JSON.stringify(messages) + "\n" + JSON.stringify(formJSON)
-          level: WARN
         ↓Call_Transaction1 [steps.TransactionStep-1730281616890]: 
           sourceTransaction: lib_C8Oforms_AI.GPT.UpdateJsonFormChat
           ↓messages [variables.StepVariable-1730281616892]: 
@@ -161,13 +205,50 @@ authenticatedContextRequired: true
                       - ↑value: 1730281616890
                     - java.lang.String: 
                       - ↑value: ./document/object/choices/object/message/content/text()
-              variableName: content
-            ↓updateForm [steps.SimpleStep-1730285829019]: 
+              variableName: form
+            ↓parseForm [steps.SimpleStep-1730285829019]: 
               expression: |
-                content = JSON.parse(content);
-                response = '' + content.chatResponse;
-                delete content.chatResponse;
-                const doc = new org.codehaus.jettison.json.JSONObject(JSON.stringify(content));
+                'form = JSON.parse(form);
+                response = '''' + form.chatResponse;
+                delete form.chatResponse;
+                
+                const configs = [];
+                for (let fields of form.formulaire) {
+                	try {
+                		if (fields.type == "description" && fields.config.html.startsWith("pexel:")) {
+                			fields.config.html = fields.config.html.substring(6);
+                			configs.push(fields.config);
+                			context.addTextNodeUnderRoot("pexel", fields.config.html);
+                		}
+                	} catch (e) {}
+                }'
+            ↓jIterator [steps.SimpleIteratorStep-1730369557256]: 
+              expression: configs
+              ↓query [steps.SimpleStep-1730369557259]: 
+                expression: query = item.html;
+              ↓Call_Transaction [steps.TransactionStep-1730369557262]: 
+                sourceTransaction: lib_C8Oforms_AI.Pexels.search
+                ↓query [variables.StepVariable-1730369557265]: 
+                ↓per_page [variables.StepVariable-1730369557268]: 
+                  value: 1
+              ↓bannerUrl [steps.SimpleSourceStep-1730369557271]: 
+                sourceDefinition: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+                    - com.twinsoft.convertigo.beans.common.XMLVector: 
+                      - java.lang.String: 
+                        - ↑value: 1730369557262
+                      - java.lang.String: 
+                        - ↑value: ./document/object/photos/object/src/landscape/text()
+                variableName: bannerUrl
+              ↓makeImg [steps.SimpleStep-1730369557274]: 
+                expression: |
+                  'try {
+                  	item.html = ''<img src="'' + bannerUrl + ''" width="100%" alt="'' + query + ''" />'';
+                  } catch (e) {}'
+            ↓updateForm [steps.SimpleStep-1730368115840]: 
+              expression: |
+                const doc = new org.codehaus.jettison.json.JSONObject(JSON.stringify(form));
                 const policy = com.twinsoft.convertigo.engine.enums.CouchPostDocumentPolicy.override;
                 fsClient.postDocument('c8oforms_fs', doc, null, policy, false);
             ↓object [steps.JsonObjectStep-1730285666940]: 
@@ -241,3 +322,5 @@ authenticatedContextRequired: true
 ↓message [variables.RequestableVariable-1730198208348]: 
 ↓reset [variables.RequestableVariable-1730219231423]: 
   value: false
+↓language [variables.RequestableVariable-1730384347463]: 
+  value: en
