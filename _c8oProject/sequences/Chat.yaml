@@ -183,8 +183,6 @@ authenticatedContextRequired: true
         ↓Call_Transaction1 [steps.TransactionStep-1730281616890]: 
           sourceTransaction: lib_C8Oforms_AI.GPT.UpdateJsonFormChat
           ↓messages [variables.StepVariable-1730281616892]: 
-          ↓model [variables.StepVariable-1730281616894]: 
-            value: gpt-4o
           ↓formJSON [variables.StepVariable-1730281616896]: 
         ↓IfExistThenElse [steps.IfExistThenElseStep-1730285553196]: 
           sourceDefinition: 
