@@ -21,10 +21,54 @@ authenticatedContextRequired: true
   condition: form_id.length > 0
   ↓getForm [steps.SimpleStep-1730385864573]: 
     expression: |
-      const fsClient = com.twinsoft.convertigo.engine.Engine.theApp.couchDbManager.getFullSyncClient();
-      formJSON = '' + fsClient.getDocument('c8oforms_fs', form_id);
+      'const fsClient = com.twinsoft.convertigo.engine.Engine.theApp.couchDbManager.getFullSyncClient();
+      formJSON = '''' + fsClient.getDocument(''c8oforms_fs'', form_id);
       form = JSON.parse(formJSON);
       
+      let ok = false;
+      const user = context.getAuthenticatedUser();
+      if (user != null) {
+      	ok = form[''~c8oAcl''] == user || form[''creator''] == user;
+      	if (!ok && ''c8oGrp'' in form && Object.keys(form.c8oGrp).length > 0) {
+      		
+      		let query = new java.util.HashMap();
+      		query.put(''reduce'', ''false'');
+      		let keys = new org.codehaus.jettison.json.JSONArray();
+      		keys.put(user);
+      		let rows = JSON.parse(fsClient.postView(''c8ofullsyncgrp'', ''design'', ''get_groups_by_user'', query, keys).toString()).rows;
+      	
+      		// call c8oforms_fs =>  authentication/distinctGroups
+      		query = new java.util.HashMap();
+      		query.put(''reduce'', ''true'');
+      		query.put(''group'', ''true'');
+      		keys = new org.codehaus.jettison.json.JSONArray();
+      		rows.forEach(x => keys.put(x.value));
+      		let usedGroups = JSON.parse(fsClient.postView(''c8oforms_fs'', ''authentication'', ''distinctGroups'', query, keys));
+      		usedGroups = usedGroups.rows.map(x => x.key);
+      		if (usedGroups.length > 0 && usedGroups.some(group => form.c8oGrp[group] == true || form.c8oGrp[group] == ''true'')) {
+      			ok = true;
+      		}
+      	}
+      }
+      if (!ok) {
+      	form = null;
+      }'
+  ↓jIf [steps.IfStep-1730802925629]: 
+    condition: form == null
+    ↓Error_structure [steps.XMLErrorStep-1730802972938]: 
+      code: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+          - SmartType: 
+            - ↑mode: PLAIN
+            - →→: '-1'
+      message: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+          - SmartType: 
+            - ↑mode: PLAIN
+            - →→: not authorized
+    ↓Return [steps.ReturnStep-1730803002473]: 
 ↓jIf [steps.IfStep-1730219295153]: 
   condition: reset == "true"
   ↓Remove_from_session [steps.SessionRemoveStep-1730219272980]: 
