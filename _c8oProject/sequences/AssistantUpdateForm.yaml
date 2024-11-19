@@ -1,0 +1,126 @@
+accessibility: Private
+responseTimeout: 300
+↓assistant [steps.SimpleStep-1732013047315]: 
+  expression: assistant = "${lib_C8Oforms_AI.GPT.assistant=}";
+↓jIf [steps.IfStep-1732013118927]: 
+  condition: assistant == ""
+  ↓Call_Transaction [steps.TransactionStep-1732014307047]: 
+    sourceTransaction: lib_C8Oforms_AI.GPT.AssistantCreate
+    ↓model [variables.StepVariable-1732014307049]: 
+  ↓assistant [steps.SimpleSourceStep-1732014865021]: 
+    sourceDefinition: 
+      - xmlizable: 
+        - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+        - com.twinsoft.convertigo.beans.common.XMLVector: 
+          - java.lang.String: 
+            - ↑value: 1732014307047
+          - java.lang.String: 
+            - ↑value: ./document/object/id/text()
+    variableName: assistant
+  ↓addAssistant [steps.SimpleStep-1732013137258]: 
+    expression: com.twinsoft.convertigo.engine.Engine.theApp.databaseObjectsManager.symbolsAdd('lib_C8Oforms_AI.GPT.assistant', assistant);
+↓Call_Transaction [steps.TransactionStep-1732027107804]: 
+  sourceTransaction: lib_C8Oforms_AI.GPT.AssistantRun
+  ↓messages [variables.StepVariable-1732027107806]: 
+  ↓formJSON [variables.StepVariable-1732027107808]: 
+  ↓assistant [variables.StepVariable-1732027107810]: 
+↓status [steps.SimpleStep-1732027945921]: 
+  expression: status = "queued";
+↓jDoWhile [steps.DoWhileStep-1732028002978]: 
+  condition: typeof status != "undefined" && status != "completed" && status != "failed"
+  ↓Sleep [steps.SimpleStep-1732028103825]: 
+    expression: java.lang.Thread.sleep(2500);
+  ↓Call_Transaction1 [steps.TransactionStep-1732027571141]: 
+    sourceTransaction: lib_C8Oforms_AI.GPT.AssistantRunRetrieve
+    ↓thread_id [variables.StepVariable-1732027571143]: 
+      sourceDefinition: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: 1732027107804
+            - java.lang.String: 
+              - ↑value: ./document/object/thread_id/text()
+    ↓run_id [variables.StepVariable-1732027571145]: 
+      sourceDefinition: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: 1732027107804
+            - java.lang.String: 
+              - ↑value: ./document/object/id/text()
+  ↓status [steps.SimpleSourceStep-1732027987711]: 
+    sourceDefinition: 
+      - xmlizable: 
+        - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+        - com.twinsoft.convertigo.beans.common.XMLVector: 
+          - java.lang.String: 
+            - ↑value: 1732027571141
+          - java.lang.String: 
+            - ↑value: ./document/object/status/text()
+    variableName: status
+↓Call_Transaction1 [steps.TransactionStep-1732028420572]: 
+  sourceTransaction: lib_C8Oforms_AI.GPT.AssistantMessage
+  ↓thread_id [variables.StepVariable-1732028420574]: 
+    sourceDefinition: 
+      - xmlizable: 
+        - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+        - com.twinsoft.convertigo.beans.common.XMLVector: 
+          - java.lang.String: 
+            - ↑value: 1732027107804
+          - java.lang.String: 
+            - ↑value: ./document/object/thread_id/text()
+↓Call_Transaction2 [steps.TransactionStep-1732029056145]: 
+  sourceTransaction: lib_C8Oforms_AI.GPT.AssistantClear
+  ↓thread_id [variables.StepVariable-1732029056147]: 
+    sourceDefinition: 
+      - xmlizable: 
+        - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+        - com.twinsoft.convertigo.beans.common.XMLVector: 
+          - java.lang.String: 
+            - ↑value: 1732027107804
+          - java.lang.String: 
+            - ↑value: ./document/object/thread_id/text()
+↓patch [steps.SimpleSourceStep-1732029116794]: 
+  sourceDefinition: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+      - com.twinsoft.convertigo.beans.common.XMLVector: 
+        - java.lang.String: 
+          - ↑value: 1732028420572
+        - java.lang.String: 
+          - ↑value: ./document/object/data/object/content/object/text/value/text()
+  variableName: patch
+↓doPatch [steps.SimpleStep-1732031667613]: 
+  expression: |
+    '
+    include(''js/jsonpatch.js'');
+    
+    
+    patch = JSON.parse(patch);
+    if (''ops'' in patch) {
+    	patch = patch.ops;
+    }
+    if (!Array.isArray(patch)) {
+    	patch = [patch];
+    }
+    
+    form = jsonpatch.apply_patch(JSON.parse(formJSON), patch);
+    '
+↓form [steps.JsonFieldStep-1732031793365]: 
+  key: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: PLAIN
+        - →→: form
+  value: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: JS
+        - →→: form
+↓messages [variables.RequestableVariable-1732012938973]: 
+↓formJSON [variables.RequestableVariable-1732012938975]: 
+↓model [variables.RequestableVariable-1732014270494]: 

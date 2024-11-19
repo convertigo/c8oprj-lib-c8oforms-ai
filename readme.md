@@ -10,6 +10,7 @@ For more technical informations : [documentation](./project.md)
 
 - [Installation](#installation)
 - [Sequences](#sequences)
+    - [AssistantUpdateForm](#assistantupdateform)
     - [Chat](#chat)
     - [GenerateJsonForm](#generatejsonform)
 
@@ -41,6 +42,25 @@ For more technical informations : [documentation](./project.md)
 
 
 ## Sequences
+
+### AssistantUpdateForm
+
+**variables**
+
+<table>
+<tr>
+<th>name</th><th>comment</th>
+</tr>
+<tr>
+<td>formJSON</td><td></td>
+</tr>
+<tr>
+<td>messages</td><td></td>
+</tr>
+<tr>
+<td>model</td><td></td>
+</tr>
+</table>
 
 ### Chat
 

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:lib_C8Oforms_AI_ns="http://www.convertigo.com/convertigo/projects/lib_C8Oforms_AI" attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://www.convertigo.com/convertigo/projects/lib_C8Oforms_AI">
+    <xsd:element name="GPT__AssistantCreate" type="lib_C8Oforms_AI_ns:GPT__AssistantCreateRequestData">
+        <xsd:annotation/>
+    </xsd:element>
+    <xsd:element name="GPT__AssistantCreateResponse">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="response" type="lib_C8Oforms_AI_ns:GPT__AssistantCreateResponseData"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:complexType name="GPT__AssistantCreateResponseType">
+        <xsd:sequence>
+            <xsd:element name="document" type="lib_C8Oforms_AI_ns:GPT__AssistantCreateResponseData"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="GPT__AssistantCreateRequestData">
+        <xsd:sequence>
+            <xsd:element name="model" type="xsd:string">
+                <xsd:annotation/>
+            </xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_idType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_objectType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_created_atType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_nameType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_descriptionType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_modelType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_instructionsType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_toolsType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute name="length" type="xsd:byte"/>
+                <xsd:attribute default="array" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_top_pType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_temperatureType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_tool_resourcesType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="object" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_metadataType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="object" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_response_format_typeType">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute default="string" name="type" type="xsd:string"/>
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_object_response_formatType">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="type" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_response_format_typeType"/>
+        </xsd:sequence>
+        <xsd:attribute default="object" name="type" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="GPT_CreateAssistant_document_objectType">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="id" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_idType"/>
+            <xsd:element minOccurs="0" name="object" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_objectType"/>
+            <xsd:element minOccurs="0" name="created_at" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_created_atType"/>
+            <xsd:element minOccurs="0" name="name" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_nameType"/>
+            <xsd:element minOccurs="0" name="description" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_descriptionType"/>
+            <xsd:element minOccurs="0" name="model" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_modelType"/>
+            <xsd:element minOccurs="0" name="instructions" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_instructionsType"/>
+            <xsd:element minOccurs="0" name="tools" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_toolsType"/>
+            <xsd:element minOccurs="0" name="top_p" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_top_pType"/>
+            <xsd:element minOccurs="0" name="temperature" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_temperatureType"/>
+            <xsd:element minOccurs="0" name="tool_resources" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_tool_resourcesType"/>
+            <xsd:element minOccurs="0" name="metadata" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_metadataType"/>
+            <xsd:element minOccurs="0" name="response_format" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_object_response_formatType"/>
+        </xsd:sequence>
+        <xsd:attribute default="object" name="type" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="GPT__AssistantCreateResponseData">
+        <xsd:sequence>
+            <xsd:element minOccurs="0" name="object" type="lib_C8Oforms_AI_ns:GPT_CreateAssistant_document_objectType"/>
+            <xsd:element minOccurs="0" name="error" type="lib_C8Oforms_AI_ns:ConvertigoError"/>
+        </xsd:sequence>
+        <xsd:attribute name="connector" type="xsd:string"/>
+        <xsd:attribute name="context" type="xsd:string"/>
+        <xsd:attribute name="contextId" type="xsd:string"/>
+        <xsd:attribute name="fromStub" type="xsd:boolean"/>
+        <xsd:attribute name="fromcache" type="xsd:boolean"/>
+        <xsd:attribute name="generated" type="xsd:string"/>
+        <xsd:attribute name="project" type="xsd:string"/>
+        <xsd:attribute name="sequence" type="xsd:string"/>
+        <xsd:attribute name="signature" type="xsd:long"/>
+        <xsd:attribute name="transaction" type="xsd:string"/>
+        <xsd:attribute name="version" type="xsd:string"/>
+        <xsd:attribute name="screenclass" type="xsd:string"/>
+        <xsd:attribute name="userReference" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="ConvertigoErrorContextVariable">
+        <xsd:attribute name="name" type="xsd:string"/>
+        <xsd:attribute name="value" type="xsd:string"/>
+    </xsd:complexType>
+    <xsd:complexType name="ConvertigoErrorContext">
+        <xsd:sequence>
+            <xsd:element maxOccurs="unbounded" minOccurs="0" name="variable" type="lib_C8Oforms_AI_ns:ConvertigoErrorContextVariable"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="ConvertigoError">
+        <xsd:sequence minOccurs="0">
+            <xsd:element name="code" type="xsd:integer"/>
+            <xsd:element name="message" type="xsd:string"/>
+            <xsd:element name="details" type="xsd:string"/>
+            <xsd:element name="context" type="lib_C8Oforms_AI_ns:ConvertigoErrorContext"/>
+            <xsd:element name="exception" type="xsd:string"/>
+            <xsd:element name="stacktrace" type="xsd:string"/>
+        </xsd:sequence>
+        <xsd:attribute name="project" type="xsd:string"/>
+        <xsd:attribute name="connector" type="xsd:string"/>
+        <xsd:attribute name="transaction" type="xsd:string"/>
+        <xsd:attribute name="sequence" type="xsd:string"/>
+        <xsd:attribute name="type">
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:string">
+                    <xsd:enumeration value="c8o"/>
+                    <xsd:enumeration value="project"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:attribute>
+    </xsd:complexType>
+</xsd:schema>

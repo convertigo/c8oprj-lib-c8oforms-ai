@@ -3,6 +3,217 @@ https: true
 port: 443
 server: ${lib_C8Oforms_AI.GPT.server=api.openai.com}
 trustAllServerCertificates: false
+↓AssistantClear [transactions.JsonHttpTransaction-1732013737645]: 
+  httpParameters: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+      - com.twinsoft.convertigo.beans.common.XMLVector: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Content-Type
+            - java.lang.String: 
+              - ↑value: application/json
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Authorization
+            - java.lang.String: 
+              - ↑value: Bearer ${lib_C8Oforms_AI.GPT.apikey.secret}
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: OpenAI-Beta
+            - java.lang.String: 
+              - ↑value: assistants=v2
+  httpVerb: DELETE
+  subDir: v1/threads/{thread_id}
+  ↓thread_id [variables.RequestableHttpVariable-1732028839445]: 
+↓AssistantCreate [transactions.JsonHttpTransaction-1732013737645]: 
+  httpParameters: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+      - com.twinsoft.convertigo.beans.common.XMLVector: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Content-Type
+            - java.lang.String: 
+              - ↑value: application/json
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Authorization
+            - java.lang.String: 
+              - ↑value: Bearer ${lib_C8Oforms_AI.GPT.apikey.secret}
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: OpenAI-Beta
+            - java.lang.String: 
+              - ↑value: assistants=v2
+  httpVerb: POST
+  subDir: v1/assistants
+  handlers: 
+    →: |
+      '
+      // Handles the transaction start event.
+      function onTransactionStarted() {
+      	const c8oForms = com.twinsoft.convertigo.engine.Engine.theApp.databaseObjectsManager.getOriginalProjectByName("C8Oforms");
+      	let allTypes = false;
+      	if (c8oForms != null) {
+      		const allTypesFile = new java.io.File(c8oForms.getDirFile(), ''DisplayObjects/mobile/assets/components/AllTypes.json'');
+      		if (allTypesFile.exists()) {
+      			allTypes = org.apache.commons.io.FileUtils.readFileToString(allTypesFile, ''UTF-8'');
+      		}
+      	}
+      	
+      	const instructions = ''You are a survey expert, smart, not lazy and creative, in all domains.\n''
+      		+ ''Only use same types of fields (other types are forbidden) from this array: \n''
+      		+ allTypes + ''\n\n''
+      		+ ''You have to edit the input user survey without any other modifications. Please keep all existing keys and values of the user\''s JSON.\n''
+      		+ ''You can edit, add or remove "pages", "formulaire" and "chatSummary", using the user input prompt and its language.\n''
+      		+ ''If not specified, generate almost 5-6 questions per new pages.\n''
+      		+ ''For new fields and pages, generate unique "id" and use their reference logically.\n''
+      		+ ''If you have to add new "description" instead of "<img>", insert in "html" the value "pexel:" + english prompt, I will replace after.\n''
+      		+ ''Create or update a root "chatSummary" key that do a short condensed summary of the whole conversation with the user, like if the user ask for this survey at once.\n''
+      		+ ''Create a root "chatResponse" key with some words for the user in its language, it will appear in its chat UI.\n''
+      		+ ''Instead of answer with the full JSON document, output a JSON Patch (RFC 6902) to apply on the user JSON. Your output must be {"ops":[{"op": ...}]}.\n''
+      		+ ''Well patch arrays to not loose data and use a dash (-) to append!\n''
+      		+ ''Use "path" on parents that exist or the patch will failed!'';
+      	
+      	const body = {
+      		model: model,
+      		name: ''Assistant from '' + context.project.getName() + '' ('' + context.project.getVersion() + '')'',
+      		response_format: {type: ''json_object''},
+      		instructions: instructions
+      	};
+      		
+      	context.connector.postQuery = JSON.stringify(body);
+      	log.info(''body: '' + context.connector.postQuery);
+      }
+      '
+  ↓model [variables.RequestableHttpVariable-1732013884382]: 
+    httpMethod: POST
+↓AssistantMessage [transactions.JsonHttpTransaction-1732013737645]: 
+  httpParameters: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+      - com.twinsoft.convertigo.beans.common.XMLVector: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Content-Type
+            - java.lang.String: 
+              - ↑value: application/json
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Authorization
+            - java.lang.String: 
+              - ↑value: Bearer ${lib_C8Oforms_AI.GPT.apikey.secret}
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: OpenAI-Beta
+            - java.lang.String: 
+              - ↑value: assistants=v2
+  subDir: v1/threads/{thread_id}/messages
+  ↓thread_id [variables.RequestableHttpVariable-1732028372149]: 
+  ↓limit [variables.RequestableHttpVariable-1732028574886]: 
+    value: 1
+↓AssistantRun [transactions.JsonHttpTransaction-1732013737645]: 
+  httpParameters: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+      - com.twinsoft.convertigo.beans.common.XMLVector: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Content-Type
+            - java.lang.String: 
+              - ↑value: application/json
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Authorization
+            - java.lang.String: 
+              - ↑value: Bearer ${lib_C8Oforms_AI.GPT.apikey.secret}
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: OpenAI-Beta
+            - java.lang.String: 
+              - ↑value: assistants=v2
+  httpVerb: POST
+  subDir: v1/threads/runs
+  handlers: 
+    →: |
+      '
+      // Handles the transaction start event.
+      function onTransactionStarted() {
+      	messages = JSON.parse(messages);
+      
+      	messages[messages.length - 1].content += ''\n\n'' + formJSON;
+      	const body = {
+      		response_format: {type: ''json_object''},
+      		assistant_id: assistant,
+      		thread: {
+      			messages: messages
+      		}
+      	};
+      		
+      	context.connector.postQuery = JSON.stringify(body);
+      	log.info(''body: '' + context.connector.postQuery);
+      }
+      '
+  ↓messages [variables.RequestableHttpVariable-1732026904538]: 
+    httpMethod: POST
+  ↓formJSON [variables.RequestableHttpVariable-1732026904541]: 
+    httpMethod: POST
+  ↓assistant [variables.RequestableHttpVariable-1732026958343]: 
+    httpMethod: POST
+↓AssistantRunRetrieve [transactions.JsonHttpTransaction-1732013737645]: 
+  httpParameters: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+      - com.twinsoft.convertigo.beans.common.XMLVector: 
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Content-Type
+            - java.lang.String: 
+              - ↑value: application/json
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: Authorization
+            - java.lang.String: 
+              - ↑value: Bearer ${lib_C8Oforms_AI.GPT.apikey.secret}
+        - xmlizable: 
+          - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+          - com.twinsoft.convertigo.beans.common.XMLVector: 
+            - java.lang.String: 
+              - ↑value: OpenAI-Beta
+            - java.lang.String: 
+              - ↑value: assistants=v2
+  subDir: v1/threads/{thread_id}/runs/{run_id}
+  ↓thread_id [variables.RequestableHttpVariable-1732027547120]: 
+  ↓run_id [variables.RequestableHttpVariable-1732027547122]: 
 ↓GenerateJsonFormChat [transactions.JsonHttpTransaction-1686577278139]: 
   ↑default: true
   httpParameters: 
@@ -106,11 +317,12 @@ trustAllServerCertificates: false
       	messages = JSON.parse(messages);
       	messages.unshift({
       		role: ''system'',
-      		content: ''You are a survey expert, smart and creative, in all domains. ''
+      		content: ''You are a survey expert, smart, not lazy and creative, in all domains. ''
       			+ ''Only use same types of fields (other types are forbidden) from this array: \n''
       			+ allTypes + ''\n''
       			+ ''You have to edit the input user survey without any other modifications. Please keep all existing keys and values of the user\''s JSON. ''
       			+ ''You can edit, add or remove "pages", "formulaire" and "chatSummary", using the user input prompt and its language. ''
+      			+ ''If not specified, generate almost 5-6 questions per new pages. ''
       			+ ''For new fields and pages, generate unique "id" and use their reference logically.''
       			+ ''If you have to add new "description" instead of "<img>", insert in "html" the value "pexel:" + english prompt, I will replace after. ''
       			+ ''Please create or update a root "chatSummary" key that do a short condensed summary of the whole conversation with the user, like if the user ask for this survey at once. ''
@@ -129,10 +341,9 @@ trustAllServerCertificates: false
       	log.info(''body: '' + context.connector.postQuery);
       }
       '
-  ↓prompt [variables.RequestableHttpVariable-1730221703841]: 
+  ↓messages [variables.RequestableHttpVariable-1730221703841]: 
     httpMethod: POST
   ↓model [variables.RequestableHttpVariable-1730221703847]: 
     httpMethod: POST
-    value: ${lib_C8Oforms_AI.GPT.model=gpt-4o}
   ↓formJSON [variables.RequestableHttpVariable-1730221775325]: 
     httpMethod: POST
