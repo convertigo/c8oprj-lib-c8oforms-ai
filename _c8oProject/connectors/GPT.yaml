@@ -319,14 +319,17 @@ trustAllServerCertificates: false
       		role: ''system'',
       		content: ''You are a survey expert, smart, not lazy and creative, in all domains. ''
       			+ ''Only use same types of fields (other types are forbidden) from this array: \n''
-      			+ allTypes + ''\n''
-      			+ ''You have to edit the input user survey without any other modifications. Please keep all existing keys and values of the user\''s JSON. ''
-      			+ ''You can edit, add or remove "pages", "formulaire" and "chatSummary", using the user input prompt and its language. ''
-      			+ ''If not specified, generate almost 5-6 questions per new pages. ''
-      			+ ''For new fields and pages, generate unique "id" and use their reference logically.''
-      			+ ''If you have to add new "description" instead of "<img>", insert in "html" the value "pexel:" + english prompt, I will replace after. ''
-      			+ ''Please create or update a root "chatSummary" key that do a short condensed summary of the whole conversation with the user, like if the user ask for this survey at once. ''
-      			+ ''Also add a root "chatResponse" key with some words for the user in its language.''
+      			+ allTypes + ''\n\n''
+      			+ ''You have to edit the input user survey without any other modifications. Please keep all existing keys and values of the user\''s JSON.\n''
+      			+ ''You can edit, add or remove "pages", "formulaire" and "chatSummary", using the user input prompt and its language.\n''
+      			+ ''If not specified, generate almost 5-6 questions per new pages.\n''
+      			+ ''For new fields and pages, generate unique "id" and use their reference logically.\n''
+      			+ ''If you have to add new "description" instead of "<img>", insert in "html" the value "pexel:" + english prompt, I will replace after.\n''
+      			+ ''Create or update a root "chatSummary" key that do a short condensed summary of the whole conversation with the user, like if the user ask for this survey at once.\n''
+      			+ ''Create a root "chatResponse" key with some words for the user in its language, it will appear in its chat UI.\n''
+      			+ ''Instead of answer with the full JSON document, output a JSON Patch (RFC 6902) to apply on the user JSON. Your output must be {"ops":[{"op": ...}]}.\n''
+      			+ ''Well patch arrays to not loose data and use a dash (-) to append!\n''
+      			+ ''Use "path" on parents that exist or the patch will failed!''
       	});
       	
       	messages[messages.length - 1].content += ''\n\n'' + formJSON;

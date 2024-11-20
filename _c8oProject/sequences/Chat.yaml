@@ -278,7 +278,24 @@ responseTimeout: 300
                           - ↑value: 1730281616890
                         - java.lang.String: 
                           - ↑value: ./document/object/choices/object/message/content/text()
-                  variableName: form
+                  variableName: patch
+                ↓doPatch [steps.SimpleStep-1732095361447]: 
+                  expression: |
+                    '
+                    include(''js/jsonpatch.js'');
+                    
+                    
+                    patch = JSON.parse(patch);
+                    if (''ops'' in patch) {
+                    	patch = patch.ops;
+                    }
+                    if (!Array.isArray(patch)) {
+                    	patch = [patch];
+                    }
+                    
+                    form = jsonpatch.apply_patch(JSON.parse(formJSON), patch);
+                    form = JSON.stringify(form);
+                    '
           ↓ifJson [steps.IfThenElseStep-1732031540875]: 
             condition: typeof form != "undefined"
             ↓jThen [steps.ThenStep-1732031543080]: 
