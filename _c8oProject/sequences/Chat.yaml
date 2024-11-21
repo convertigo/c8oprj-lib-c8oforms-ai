@@ -232,35 +232,41 @@ responseTimeout: 300
           expression: |
             messages = JSON.stringify(messages.filter(o => o.role));
             
-        ↓mode [steps.XMLComplexStep-1732012340778]: 
-          nodeName: mode
-          output: false
-          ↓jIfThenElse [steps.IfThenElseStep-1732012354418]: 
-            condition: '"${lib_C8Oforms_AI.mode=chat}" == "assistant"'
-            ↓jThen [steps.ThenStep-1732012355281]: 
-              ↓Call_Sequence [steps.SequenceStep-1732012879217]: 
-                sourceSequence: lib_C8Oforms_AI.AssistantUpdateForm
-                ↓messages [variables.StepVariable-1732012935647]: 
-                ↓formJSON [variables.StepVariable-1732012935650]: 
-                ↓model [variables.StepVariable-1732014285486]: 
-              ↓form [steps.SimpleSourceStep-1732031622699]: 
-                sourceDefinition: 
-                  - xmlizable: 
-                    - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
-                    - com.twinsoft.convertigo.beans.common.XMLVector: 
-                      - java.lang.String: 
-                        - ↑value: 1732012879217
-                      - java.lang.String: 
-                        - ↑value: ./document/form/text()
-                variableName: form
-            ↓jElse [steps.ElseStep-1732012355283]: 
-              ↓Call_Transaction1 [steps.TransactionStep-1730281616890]: 
-                sourceTransaction: lib_C8Oforms_AI.GPT.UpdateJsonFormChat
-                ↓messages [variables.StepVariable-1730281616892]: 
-                ↓formJSON [variables.StepVariable-1730281616896]: 
-                ↓model [variables.StepVariable-1732013871053]: 
-              ↓IfExistThenElse [steps.IfExistStep-1732031595522]: 
-                condition: IfExistThenElse
+        ↓jIfThenElse [steps.IfThenElseStep-1732012354418]: 
+          condition: '"${lib_C8Oforms_AI.mode=chat}" == "assistant"'
+          ↓jThen [steps.ThenStep-1732012355281]: 
+            ↓Call_Sequence [steps.SequenceStep-1732012879217]: 
+              sourceSequence: lib_C8Oforms_AI.AssistantUpdateForm
+              ↓messages [variables.StepVariable-1732012935647]: 
+              ↓formJSON [variables.StepVariable-1732012935650]: 
+              ↓model [variables.StepVariable-1732014285486]: 
+            ↓form [steps.SimpleSourceStep-1732031622699]: 
+              sourceDefinition: 
+                - xmlizable: 
+                  - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+                  - com.twinsoft.convertigo.beans.common.XMLVector: 
+                    - java.lang.String: 
+                      - ↑value: 1732012879217
+                    - java.lang.String: 
+                      - ↑value: ./document/form/text()
+              variableName: form
+          ↓jElse [steps.ElseStep-1732012355283]: 
+            ↓Call_Transaction1 [steps.TransactionStep-1730281616890]: 
+              sourceTransaction: lib_C8Oforms_AI.GPT.UpdateJsonFormChat
+              ↓messages [variables.StepVariable-1730281616892]: 
+              ↓formJSON [variables.StepVariable-1730281616896]: 
+              ↓model [variables.StepVariable-1732013871053]: 
+            ↓IfExistThenElse [steps.IfExistStep-1732031595522]: 
+              condition: IfExistThenElse
+              sourceDefinition: 
+                - xmlizable: 
+                  - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+                  - com.twinsoft.convertigo.beans.common.XMLVector: 
+                    - java.lang.String: 
+                      - ↑value: 1730281616890
+                    - java.lang.String: 
+                      - ↑value: ./document/object/choices/object/message/content
+              ↓content [steps.SimpleSourceStep-1730285763077]: 
                 sourceDefinition: 
                   - xmlizable: 
                     - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
@@ -268,137 +274,128 @@ responseTimeout: 300
                       - java.lang.String: 
                         - ↑value: 1730281616890
                       - java.lang.String: 
-                        - ↑value: ./document/object/choices/object/message/content
-                ↓content [steps.SimpleSourceStep-1730285763077]: 
-                  sourceDefinition: 
-                    - xmlizable: 
-                      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
-                      - com.twinsoft.convertigo.beans.common.XMLVector: 
-                        - java.lang.String: 
-                          - ↑value: 1730281616890
-                        - java.lang.String: 
-                          - ↑value: ./document/object/choices/object/message/content/text()
-                  variableName: patch
-                ↓doPatch [steps.SimpleStep-1732095361447]: 
-                  expression: |
-                    '
-                    include(''js/jsonpatch.js'');
-                    
-                    
-                    patch = JSON.parse(patch);
-                    if (''ops'' in patch) {
-                    	patch = patch.ops;
-                    }
-                    if (!Array.isArray(patch)) {
-                    	patch = [patch];
-                    }
-                    
-                    form = jsonpatch.apply_patch(JSON.parse(formJSON), patch);
-                    form = JSON.stringify(form);
-                    '
-          ↓ifJson [steps.IfThenElseStep-1732031540875]: 
-            condition: typeof form != "undefined"
-            ↓jThen [steps.ThenStep-1732031543080]: 
-              ↓parseForm [steps.SimpleStep-1730285829019]: 
+                        - ↑value: ./document/object/choices/object/message/content/text()
+                variableName: patch
+              ↓doPatch [steps.SimpleStep-1732095361447]: 
                 expression: |
-                  'form = JSON.parse(form);
-                  response = ''chatResponse'' in form ? '''' + form.chatResponse : '':)'';
-                  delete form.chatResponse;
+                  '
+                  include(''js/jsonpatch.js'');
                   
-                  const configs = [];
-                  for (let fields of form.formulaire) {
-                  	try {
-                  		if (fields.type == "description" && fields.config.html.startsWith("pexel:")) {
-                  			fields.config.html = fields.config.html.substring(6);
-                  			configs.push(fields.config);
-                  			context.addTextNodeUnderRoot("pexel", fields.config.html);
-                  		}
-                  	} catch (e) {}
-                  }'
-              ↓jIterator [steps.SimpleIteratorStep-1730369557256]: 
-                expression: configs
-                ↓query [steps.SimpleStep-1730369557259]: 
-                  expression: query = item.html;
-                ↓Call_Transaction [steps.TransactionStep-1730369557262]: 
-                  sourceTransaction: lib_C8Oforms_AI.Pexels.search
-                  ↓query [variables.StepVariable-1730369557265]: 
-                  ↓per_page [variables.StepVariable-1730369557268]: 
-                    value: 1
-                ↓bannerUrl [steps.SimpleSourceStep-1730369557271]: 
-                  sourceDefinition: 
-                    - xmlizable: 
-                      - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
-                      - com.twinsoft.convertigo.beans.common.XMLVector: 
-                        - java.lang.String: 
-                          - ↑value: 1730369557262
-                        - java.lang.String: 
-                          - ↑value: ./document/object/photos/object/src/landscape/text()
-                  variableName: bannerUrl
-                ↓makeImg [steps.SimpleStep-1730369557274]: 
-                  expression: |
-                    'try {
-                    	item.html = ''<img src="'' + bannerUrl + ''" width="100%" alt="'' + query + ''" />'';
-                    } catch (e) {}'
-              ↓updateForm [steps.SimpleStep-1730368115840]: 
+                  
+                  patch = JSON.parse(patch);
+                  if (''ops'' in patch) {
+                  	patch = patch.ops;
+                  }
+                  if (!Array.isArray(patch)) {
+                  	patch = [patch];
+                  }
+                  
+                  form = jsonpatch.apply_patch(JSON.parse(formJSON), patch);
+                  form = JSON.stringify(form);
+                  '
+        ↓ifJson [steps.IfThenElseStep-1732031540875]: 
+          condition: typeof form != "undefined"
+          ↓jThen [steps.ThenStep-1732031543080]: 
+            ↓parseForm [steps.SimpleStep-1730285829019]: 
+              expression: |
+                'form = JSON.parse(form);
+                response = ''chatResponse'' in form ? '''' + form.chatResponse : '':)'';
+                delete form.chatResponse;
+                
+                const configs = [];
+                for (let fields of form.formulaire) {
+                	try {
+                		if (fields.type == "description" && fields.config.html.startsWith("pexel:")) {
+                			fields.config.html = fields.config.html.substring(6);
+                			configs.push(fields.config);
+                			context.addTextNodeUnderRoot("pexel", fields.config.html);
+                		}
+                	} catch (e) {}
+                }'
+            ↓jIterator [steps.SimpleIteratorStep-1730369557256]: 
+              expression: configs
+              ↓query [steps.SimpleStep-1730369557259]: 
+                expression: query = item.html;
+              ↓Call_Transaction [steps.TransactionStep-1730369557262]: 
+                sourceTransaction: lib_C8Oforms_AI.Pexels.search
+                ↓query [variables.StepVariable-1730369557265]: 
+                ↓per_page [variables.StepVariable-1730369557268]: 
+                  value: 1
+              ↓bannerUrl [steps.SimpleSourceStep-1730369557271]: 
+                sourceDefinition: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.common.XMLVector
+                    - com.twinsoft.convertigo.beans.common.XMLVector: 
+                      - java.lang.String: 
+                        - ↑value: 1730369557262
+                      - java.lang.String: 
+                        - ↑value: ./document/object/photos/object/src/landscape/text()
+                variableName: bannerUrl
+              ↓makeImg [steps.SimpleStep-1730369557274]: 
                 expression: |
-                  const doc = new org.codehaus.jettison.json.JSONObject(JSON.stringify(form));
-                  const policy = com.twinsoft.convertigo.engine.enums.CouchPostDocumentPolicy.override;
-                  fsClient.postDocument('c8oforms_fs', doc, null, policy, false);
-              ↓object [steps.JsonObjectStep-1730285666940]: 
-                ↓role [steps.JsonFieldStep-1730285666943]: 
-                  key: 
-                    - xmlizable: 
-                      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
-                      - SmartType: 
-                        - ↑mode: PLAIN
-                        - →→: role
-                  value: 
-                    - xmlizable: 
-                      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
-                      - SmartType: 
-                        - ↑mode: PLAIN
-                        - →→: assistant
-                ↓content [steps.JsonFieldStep-1730285666946]: 
-                  key: 
-                    - xmlizable: 
-                      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
-                      - SmartType: 
-                        - ↑mode: PLAIN
-                        - →→: content
-                  value: 
-                    - xmlizable: 
-                      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
-                      - SmartType: 
-                        - ↑mode: JS
-                        - →→: response
-            ↓jElse [steps.ElseStep-1732031543082]: 
-              ↓object [steps.JsonObjectStep-1730285610886]: 
-                ↓role [steps.JsonFieldStep-1730285610889]: 
-                  key: 
-                    - xmlizable: 
-                      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
-                      - SmartType: 
-                        - ↑mode: PLAIN
-                        - →→: role
-                  value: 
-                    - xmlizable: 
-                      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
-                      - SmartType: 
-                        - ↑mode: PLAIN
-                        - →→: assistant
-                ↓content [steps.JsonFieldStep-1730285610892]: 
-                  key: 
-                    - xmlizable: 
-                      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
-                      - SmartType: 
-                        - ↑mode: PLAIN
-                        - →→: content
-                  value: 
-                    - xmlizable: 
-                      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
-                      - SmartType: 
-                        - ↑mode: PLAIN
-                        - →→: Sorry but there is something wrong :(
+                  'try {
+                  	item.html = ''<img src="'' + bannerUrl + ''" width="100%" alt="'' + query + ''" />'';
+                  } catch (e) {}'
+            ↓updateForm [steps.SimpleStep-1730368115840]: 
+              expression: |
+                const doc = new org.codehaus.jettison.json.JSONObject(JSON.stringify(form));
+                const policy = com.twinsoft.convertigo.engine.enums.CouchPostDocumentPolicy.override;
+                fsClient.postDocument('c8oforms_fs', doc, null, policy, false);
+            ↓object [steps.JsonObjectStep-1730285666940]: 
+              ↓role [steps.JsonFieldStep-1730285666943]: 
+                key: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: role
+                value: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: assistant
+              ↓content [steps.JsonFieldStep-1730285666946]: 
+                key: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: content
+                value: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: JS
+                      - →→: response
+          ↓jElse [steps.ElseStep-1732031543082]: 
+            ↓object [steps.JsonObjectStep-1730285610886]: 
+              ↓role [steps.JsonFieldStep-1730285610889]: 
+                key: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: role
+                value: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: assistant
+              ↓content [steps.JsonFieldStep-1730285610892]: 
+                key: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: content
+                value: 
+                  - xmlizable: 
+                    - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+                    - SmartType: 
+                      - ↑mode: PLAIN
+                      - →→: Sorry but there is something wrong :(
 ↓setLastAiChat [steps.SessionSetObjectStep-1730217529527]: 
   key: getLastAiChat
   value: 
