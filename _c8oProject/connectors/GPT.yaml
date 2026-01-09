@@ -307,7 +307,7 @@ trustAllServerCertificates: false
       	const c8oForms = com.twinsoft.convertigo.engine.Engine.theApp.databaseObjectsManager.getOriginalProjectByName("C8Oforms");
       	let allTypes = false;
       	if (c8oForms != null) {
-      		const allTypesFile = new java.io.File(c8oForms.getDirFile(), ''DisplayObjects/mobile/assets/components/AllTypes.json'');
+      		var allTypesFile = new java.io.File(c8oForms.getDirFile(), ''DisplayObjects/mobile/assets/components/AllTypes.json'');
       		if (allTypesFile.exists()) {
       			allTypes = org.apache.commons.io.FileUtils.readFileToString(allTypesFile, ''UTF-8'');
       		}

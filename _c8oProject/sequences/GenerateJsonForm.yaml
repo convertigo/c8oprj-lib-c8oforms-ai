@@ -21,6 +21,11 @@ responseTimeout: 300
     
     let resp;
     try { 
+    	if(response.indexOf("```json") == 0){
+    		response = response.substring(7);
+    		var idx = response.indexOf("```");
+    		response = response.substring(0, idx);
+    	}
     	resp = JSON.parse(response);
     	resp.chatSummary = prompt;
     }
