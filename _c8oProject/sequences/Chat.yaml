@@ -1,16 +1,16 @@
 authenticatedContextRequired: true
-responseTimeout: 300
+responseTimeout: 700
 ↓Init [steps.SimpleStep-1730201015361]: 
   expression: |
     '//java.lang.Thread.sleep(2000);
     _use_docid = (form_id += "");
     message += "";
-    content = "How do you want to modify this form?";
+    content = "Describe the change to apply. The form will be generated directly without confirmation.";
     
     const i18n = {
-        "fr": "Comment souhaitez-vous modifier ce formulaire ?",
-        "it": "Come vuoi modificare questo modulo?",
-        "es": "¿Cómo deseas modificar este formulario?"
+        "fr": "Decrivez la modification a appliquer. Le formulaire sera genere directement sans confirmation.",
+        "it": "Descrivi la modifica da applicare. Il modulo verra generato direttamente senza conferma.",
+        "es": "Describe la modificacion a aplicar. El formulario se generara directamente sin confirmacion."
     };
     
     if (language in i18n) {
@@ -18,6 +18,14 @@ responseTimeout: 300
     }
     
     form = false;'
+↓EnsureAvailableActions [steps.SimpleStep-1736000000200]: 
+  expression: |
+    'try {
+      include("./js/ai_helpers.js");
+      var availableActions = JSON.stringify(getAvailableActions());
+      var availableSources = JSON.stringify(getAvailableSources());
+    } catch (e) {
+    }'
 ↓model [steps.SimpleStep-1732013814779]: 
   expression: model = "${lib_C8Oforms_AI.GPT.model=gpt-4o}";
 ↓jIf1 [steps.IfStep-1730385864567]: 
@@ -29,7 +37,11 @@ responseTimeout: 300
       form = JSON.parse(formJSON);
       
       let ok = false;
-      const user = context.getAuthenticatedUser();
+      let fallbackUser = authenticatedUser == null ? "" : (authenticatedUser += "");
+      if (fallbackUser == "null" || fallbackUser == "undefined") {
+      	fallbackUser = "";
+      }
+      const user = context.getAuthenticatedUser() || (fallbackUser.length > 0 ? fallbackUser : null);
       if (user != null) {
       	ok = form[''~c8oAcl''] == user || form[''creator''] == user;
       	if (!ok && ''c8oGrp'' in form && Object.keys(form.c8oGrp).length > 0) {
@@ -132,7 +144,7 @@ responseTimeout: 300
       ↓jThen [steps.ThenStep-1730218094728]: 
       ↓jElse [steps.ElseStep-1730218094730]: 
         ↓jIf [steps.IfStep-1730386145593]: 
-          condition: '"chatSummary" in form'
+          condition: form != null && typeof form == "object" && "chatSummary" in form
           ↓object [steps.JsonObjectStep-1730386183553]: 
             ↓role [steps.JsonFieldStep-1730386183556]: 
               key: 
@@ -256,6 +268,8 @@ responseTimeout: 300
               ↓messages [variables.StepVariable-1730281616892]: 
               ↓formJSON [variables.StepVariable-1730281616896]: 
               ↓model [variables.StepVariable-1732013871053]: 
+              ↓availableActions [variables.StepVariable-1890000000201]: 
+              ↓availableSources [variables.StepVariable-1890000000203]: 
             ↓IfExistThenElse [steps.IfExistStep-1732031595522]: 
               condition: IfExistThenElse
               sourceDefinition: 
@@ -280,8 +294,6 @@ responseTimeout: 300
                 expression: |
                   '
                   include(''js/jsonpatch.js'');
-                  
-                  
                   patch = JSON.parse(patch);
                   if (''ops'' in patch) {
                   	patch = patch.ops;
@@ -289,9 +301,640 @@ responseTimeout: 300
                   if (!Array.isArray(patch)) {
                   	patch = [patch];
                   }
-                  
-                  form = jsonpatch.apply_patch(JSON.parse(formJSON), patch);
-                  form = JSON.stringify(form);
+                  var nameToId = {};
+                  try {
+                  	if (formJSON) {
+                  		var parsedForm = JSON.parse(formJSON);
+                  		if (parsedForm && parsedForm.formulaire && parsedForm.formulaire.length) {
+                  			for (var i = 0; i < parsedForm.formulaire.length; i++) {
+                  				var field = parsedForm.formulaire[i];
+                  				if (field && field.name != null && field.id != null) {
+                  					nameToId[field.name] = field.id;
+                  				}
+                  			}
+                  		}
+                  	}
+                  } catch (e) {}
+                  function buildC8oToken(id, c8opath, c8oName) {
+                  	if (c8opath == null) { c8opath = ""; }
+                  	var meta = {
+                  		c8otype: "path",
+                  		c8opath: c8opath,
+                  		c8oPrettyPath: null,
+                  		c8obuiltin: null,
+                  		fakeId: "uniqueId",
+                  		c8oName: c8oName
+                  	};
+                  	return "$$START" + id + JSON.stringify(meta) + "END" + id + "$$";
+                  }
+                  function replaceVarsPlaceholders(value) {
+                  	if (typeof value != "string" || value.indexOf("{{") == -1) {
+                  		return value;
+                  	}
+                  	return value.replace(/\{\{\s*([^}]+?)\s*\}\}/g, function(match, raw) {
+                  		var token = (raw || "").trim();
+                  		if (!token) {
+                  			return match;
+                  		}
+                  		if (token.indexOf("api.") == 0 || token.indexOf("await api.") == 0) {
+                  			var apiPath = token;
+                  			if (apiPath.indexOf("await ") == 0) {
+                  				apiPath = apiPath.substring(6).trim();
+                  			}
+                  			var apiName = apiPath.split(".").slice(-1)[0] || null;
+                  			if (apiName != null && apiName.indexOf("(") != -1) {
+                  				apiName = apiName.split("(")[0];
+                  			}
+                  			return buildC8oToken(1, apiPath, apiName);
+                  		}
+                  		var cleaned = token;
+                  		if (cleaned.indexOf("fields.") == 0) {
+                  			cleaned = cleaned.substring(7);
+                  		}
+                  		if (cleaned.indexOf("field.") == 0) {
+                  			cleaned = cleaned.substring(6);
+                  		}
+                  		var id = nameToId[cleaned];
+                  		if (id != null) {
+                  			return buildC8oToken(id, "", null);
+                  		}
+                  		return match;
+                  	});
+                  }
+                  function normalizeValue(value) {
+                  	if (value == null) {
+                  		return value;
+                  	}
+                  	if (typeof value == "string") {
+                  		return replaceVarsPlaceholders(value);
+                  	}
+                  	if (Array.isArray(value)) {
+                  		for (var i = 0; i < value.length; i++) {
+                  			value[i] = normalizeValue(value[i]);
+                  		}
+                  		return value;
+                  	}
+                  	if (typeof value == "object") {
+                  		for (var key in value) {
+                  			if (Object.prototype.hasOwnProperty.call(value, key)) {
+                  				value[key] = normalizeValue(value[key]);
+                  			}
+                  		}
+                  		return value;
+                  	}
+                  	return value;
+                  }
+                  for (var pi = 0; pi < patch.length; pi++) {
+                  	var op = patch[pi];
+                  	if (op && typeof op == "object" && "value" in op) {
+                  		op.value = normalizeValue(op.value);
+                  	}
+                  }
+                  function cloneJson(value) {
+                  	try {
+                  		return JSON.parse(JSON.stringify(value));
+                  	} catch (e) {
+                  		return value;
+                  	}
+                  }
+                  function decodePointerToken(token) {
+                  	if (token == null) {
+                  		return "";
+                  	}
+                  	return ("" + token).replace(/~1/g, "/").replace(/~0/g, "~");
+                  }
+                  function pointerExists(root, pointer) {
+                  	if (pointer === "") {
+                  		return true;
+                  	}
+                  	if (typeof pointer != "string" || pointer.length == 0 || pointer.charAt(0) != "/") {
+                  		return false;
+                  	}
+                  	var parts = pointer.split("/");
+                  	var current = root;
+                  	for (var p = 1; p < parts.length; p++) {
+                  		var token = decodePointerToken(parts[p]);
+                  		if (Array.isArray(current)) {
+                  			if (token === "-") {
+                  				return false;
+                  			}
+                  			var idx = parseInt(token, 10);
+                  			if (isNaN(idx) || idx < 0 || idx >= current.length) {
+                  				return false;
+                  			}
+                  			current = current[idx];
+                  			continue;
+                  		}
+                  		if (current != null && typeof current == "object" && Object.prototype.hasOwnProperty.call(current, token)) {
+                  			current = current[token];
+                  			continue;
+                  		}
+                  		return false;
+                  	}
+                  	return true;
+                  }
+                  var cleanedPatch = [];
+                  for (var pj = 0; pj < patch.length; pj++) {
+                  	var op2 = patch[pj];
+                  	if (op2 == null || typeof op2 != "object") {
+                  		continue;
+                  	}
+                  	if (!("op" in op2)) {
+                  		if ("path" in op2) {
+                  			if (op2.path && op2.path.indexOf("/-") == op2.path.length - 2) {
+                  				op2.op = "add";
+                  			} else {
+                  				op2.op = "replace";
+                  			}
+                  		} else {
+                  			continue;
+                  		}
+                  	}
+                  	if (!("path" in op2) || typeof op2.path != "string") {
+                  		continue;
+                  	}
+                  	cleanedPatch.push(op2);
+                  }
+                  var formObj = null;
+                  var baseFormObj = JSON.parse(formJSON);
+                  if (cleanedPatch.length == 0) {
+                  	formObj = baseFormObj;
+                  } else {
+                  	var safePatch = [];
+                  	var probeFormObj = cloneJson(baseFormObj);
+                  	for (var pk = 0; pk < cleanedPatch.length; pk++) {
+                  		var op3 = cloneJson(cleanedPatch[pk]);
+                  		if (op3 && op3.op == "replace" && !pointerExists(probeFormObj, op3.path)) {
+                  			op3.op = "add";
+                  		}
+                  		safePatch.push(op3);
+                  		try {
+                  			probeFormObj = jsonpatch.apply_patch(probeFormObj, [op3]);
+                  		} catch (eProbe) {}
+                  	}
+                  	patch = safePatch;
+                  	try {
+                  		formObj = jsonpatch.apply_patch(cloneJson(baseFormObj), patch);
+                  	} catch (ePatch) {
+                  		var fallbackFormObj = cloneJson(baseFormObj);
+                  		var fallbackPatch = [];
+                  		for (var pf = 0; pf < patch.length; pf++) {
+                  			var op4 = patch[pf];
+                  			try {
+                  				fallbackFormObj = jsonpatch.apply_patch(fallbackFormObj, [op4]);
+                  				fallbackPatch.push(op4);
+                  			} catch (eOp4) {
+                  				if (op4 && op4.op == "replace") {
+                  					var opAdd = cloneJson(op4);
+                  					opAdd.op = "add";
+                  					try {
+                  						fallbackFormObj = jsonpatch.apply_patch(fallbackFormObj, [opAdd]);
+                  						fallbackPatch.push(opAdd);
+                  					} catch (eAdd) {}
+                  				}
+                  			}
+                  		}
+                  		patch = fallbackPatch;
+                  		formObj = fallbackFormObj;
+                  	}
+                  }
+                  if (formObj && typeof formObj == "object") {
+                  	if (!formObj.flows || !Array.isArray(formObj.flows)) {
+                  		formObj.flows = [];
+                  	}
+                  	var formulasFlow = null;
+                  	for (var fi = 0; fi < formObj.flows.length; fi++) {
+                  		var flow = formObj.flows[fi];
+                  		if (flow && (flow.id == "formulas" || flow.name == "formulas")) {
+                  			formulasFlow = flow;
+                  			break;
+                  		}
+                  	}
+                  	if (formulasFlow == null) {
+                  		formulasFlow = { id: "formulas", elements: [] };
+                  		formObj.flows.push(formulasFlow);
+                  	}
+                  	if (!formulasFlow.elements || !Array.isArray(formulasFlow.elements)) {
+                  		formulasFlow.elements = [];
+                  	}
+                  	function normalizeBusinessLogic(elem, idxHint) {
+                  		if (!elem || typeof elem != "object") {
+                  			return;
+                  		}
+                  		if ((elem.type == null || elem.type === "")
+                  			&& elem.sources && typeof elem.sources == "object" && !Array.isArray(elem.sources)) {
+                  			if (elem.sources.type != null) {
+                  				elem.type = "" + elem.sources.type;
+                  				try { delete elem.sources.type; } catch (e) {}
+                  			} else if (elem.sources.self && typeof elem.sources.self == "object" && !Array.isArray(elem.sources.self)
+                  				&& elem.sources.self.type != null) {
+                  				elem.type = "" + elem.sources.self.type;
+                  				try { delete elem.sources.self.type; } catch (e00) {}
+                  			}
+                  		}
+                  		if (elem.type != "business_logic") {
+                  			return;
+                  		}
+                  		if (elem.sources && typeof elem.sources == "object" && !Array.isArray(elem.sources)) {
+                  			var sourceMetaCandidates = [elem.sources];
+                  			if (elem.sources.self && typeof elem.sources.self == "object" && !Array.isArray(elem.sources.self)) {
+                  				sourceMetaCandidates.push(elem.sources.self);
+                  			}
+                  			for (var smi = 0; smi < sourceMetaCandidates.length; smi++) {
+                  				var sourceMeta = sourceMetaCandidates[smi];
+                  				if (elem.id == null && sourceMeta.id != null) {
+                  					elem.id = sourceMeta.id;
+                  					try { delete sourceMeta.id; } catch (e) {}
+                  				}
+                  				if ((elem.name == null || elem.name === "") && sourceMeta.name != null) {
+                  					elem.name = "" + sourceMeta.name;
+                  					try { delete sourceMeta.name; } catch (e) {}
+                  				}
+                  				if ((elem.cat == null || elem.cat === "") && sourceMeta.cat != null) {
+                  					elem.cat = "" + sourceMeta.cat;
+                  					try { delete sourceMeta.cat; } catch (e) {}
+                  				}
+                  				if ((elem.type == null || elem.type === "") && sourceMeta.type != null) {
+                  					elem.type = "" + sourceMeta.type;
+                  					try { delete sourceMeta.type; } catch (e) {}
+                  				}
+                  				if ((!elem.config || typeof elem.config != "object" || Array.isArray(elem.config))
+                  					&& sourceMeta.config && typeof sourceMeta.config == "object" && !Array.isArray(sourceMeta.config)) {
+                  					elem.config = sourceMeta.config;
+                  					try { delete sourceMeta.config; } catch (e) {}
+                  				}
+                  			}
+                  		}
+                  		if ((elem.id == null || elem.id === "") && elem.config && typeof elem.config == "object" && elem.config.id != null) {
+                  			elem.id = elem.config.id;
+                  			try { delete elem.config.id; } catch (e6) {}
+                  		}
+                  		if ((elem.name == null || elem.name === "") && elem.config && typeof elem.config == "object" && elem.config.name != null) {
+                  			elem.name = "" + elem.config.name;
+                  			try { delete elem.config.name; } catch (e7) {}
+                  		}
+                  		if (!elem.cat) {
+                  			elem.cat = "action";
+                  		}
+                  		if (!elem.sources || typeof elem.sources != "object" || Array.isArray(elem.sources)) {
+                  			elem.sources = {};
+                  		}
+                  		if (!elem.sources.self || typeof elem.sources.self != "object" || Array.isArray(elem.sources.self)) {
+                  			elem.sources.self = { enabled: true, vars: {} };
+                  		}
+                  		if (!elem.sources.self.vars || typeof elem.sources.self.vars != "object" || Array.isArray(elem.sources.self.vars)) {
+                  			elem.sources.self.vars = {};
+                  		}
+                  		if (!elem.sources.self.vars.selfVar || typeof elem.sources.self.vars.selfVar != "object" || Array.isArray(elem.sources.self.vars.selfVar)) {
+                  			elem.sources.self.vars.selfVar = { str: "", type: "ts" };
+                  		}
+                  		var selfVar = elem.sources.self.vars.selfVar;
+                  		if (typeof elem.expression == "string" && (selfVar.str == null || selfVar.str === "")) {
+                  			selfVar.str = elem.expression;
+                  		}
+                  		if (selfVar.str == null) {
+                  			selfVar.str = "";
+                  		}
+                  		selfVar.type = "ts";
+                  		if (!elem.config || typeof elem.config != "object" || Array.isArray(elem.config)) {
+                  			elem.config = {};
+                  		}
+                  		elem.config.page = "formulas";
+                  		if (elem.id == null || elem.id === "") {
+                  			var idxValue = (typeof idxHint == "number" && idxHint >= 0) ? idxHint : 0;
+                  			elem.id = (new Date().getTime()) + idxValue;
+                  		}
+                  		if (elem.name == null || elem.name === "") {
+                  			elem.name = "businessLogic" + elem.id;
+                  		}
+                  		if ("expression" in elem) {
+                  			try { delete elem.expression; } catch (e) {}
+                  		}
+                  	}
+                  	function cleanupOrphanFormulaConfig(flowObj) {
+                  		if (!flowObj || !Array.isArray(flowObj.elements)) {
+                  			return;
+                  		}
+                  		var cleaned = [];
+                  		for (var ce = 0; ce < flowObj.elements.length; ce++) {
+                  			var current = flowObj.elements[ce];
+                  			if (current == null || typeof current != "object") {
+                  				continue;
+                  			}
+                  			var currentKeys = Object.keys(current);
+                  			var keysAreMetaOnly = true;
+                  			for (var cki = 0; cki < currentKeys.length; cki++) {
+                  				var ck = currentKeys[cki];
+                  				if (ck != "config" && ck != "id" && ck != "name" && ck != "sources") {
+                  					keysAreMetaOnly = false;
+                  					break;
+                  				}
+                  			}
+                  			var isMetaOnly = !current.type && !current.cat && keysAreMetaOnly;
+                  			if (isMetaOnly) {
+                  				if (cleaned.length > 0) {
+                  					var prev = cleaned[cleaned.length - 1];
+                  					if (prev && prev.type == "business_logic") {
+                  						if (!prev.config || typeof prev.config != "object") {
+                  							prev.config = {};
+                  						}
+                  						if (current.config && typeof current.config == "object" && !Array.isArray(current.config)) {
+                  							for (var mk in current.config) {
+                  								if (Object.prototype.hasOwnProperty.call(current.config, mk) && prev.config[mk] == null) {
+                  									prev.config[mk] = current.config[mk];
+                  								}
+                  							}
+                  						}
+                  						if (prev.id == null && current.id != null) {
+                  							prev.id = current.id;
+                  						}
+                  						if ((prev.name == null || prev.name === "") && current.name != null) {
+                  							prev.name = "" + current.name;
+                  						}
+                  						if ((!prev.sources || typeof prev.sources != "object" || Array.isArray(prev.sources))
+                  							&& current.sources && typeof current.sources == "object" && !Array.isArray(current.sources)) {
+                  							prev.sources = current.sources;
+                  						}
+                  						normalizeBusinessLogic(prev, ce);
+                  						continue;
+                  					}
+                  				}
+                  				continue;
+                  			}
+                  			cleaned.push(current);
+                  		}
+                  		flowObj.elements = cleaned;
+                  	}
+                  	function repairBrokenUnicode(value) {
+                  		if (value == null) {
+                  			return value;
+                  		}
+                  		if (typeof value == "string") {
+                  			return value.replace(/\u0000([0-9a-fA-F]{2})/g, function(match, hex) {
+                  				try {
+                  					return String.fromCharCode(parseInt(hex, 16));
+                  				} catch (e) {
+                  					return match;
+                  				}
+                  			});
+                  		}
+                  		if (Array.isArray(value)) {
+                  			for (var ri = 0; ri < value.length; ri++) {
+                  				value[ri] = repairBrokenUnicode(value[ri]);
+                  			}
+                  			return value;
+                  		}
+                  		if (typeof value == "object") {
+                  			for (var rk in value) {
+                  				if (Object.prototype.hasOwnProperty.call(value, rk)) {
+                  					value[rk] = repairBrokenUnicode(value[rk]);
+                  				}
+                  			}
+                  			return value;
+                  		}
+                  		return value;
+                  	}
+                  	function getBusinessLogicCode(elem) {
+                  		try {
+                  			if (elem && elem.sources && elem.sources.self && elem.sources.self.vars
+                  				&& elem.sources.self.vars.selfVar && typeof elem.sources.self.vars.selfVar.str == "string") {
+                  				return elem.sources.self.vars.selfVar.str;
+                  			}
+                  		} catch (e) {}
+                  		return "";
+                  	}
+                  	function setBusinessLogicCode(elem, code) {
+                  		if (!elem.sources || typeof elem.sources != "object" || Array.isArray(elem.sources)) {
+                  			elem.sources = {};
+                  		}
+                  		if (!elem.sources.self || typeof elem.sources.self != "object" || Array.isArray(elem.sources.self)) {
+                  			elem.sources.self = { enabled: true, vars: {} };
+                  		}
+                  		if (!elem.sources.self.vars || typeof elem.sources.self.vars != "object" || Array.isArray(elem.sources.self.vars)) {
+                  			elem.sources.self.vars = {};
+                  		}
+                  		if (!elem.sources.self.vars.selfVar || typeof elem.sources.self.vars.selfVar != "object" || Array.isArray(elem.sources.self.vars.selfVar)) {
+                  			elem.sources.self.vars.selfVar = { str: "", type: "ts" };
+                  		}
+                  		elem.sources.self.vars.selfVar.str = code;
+                  		elem.sources.self.vars.selfVar.type = "ts";
+                  	}
+                  	function buildKanbanFallbackCode(idsList) {
+                  		var idsJson = "[]";
+                  		try {
+                  			idsJson = JSON.stringify(idsList || []);
+                  		} catch (e) {}
+                  		var lines = [];
+                  		lines.push("(async function(){");
+                  		lines.push("  var tag = ''kanban-board'';");
+                  		lines.push("  if (!page.local.__c8oReserved_kanbanBoard) { page.local.__c8oReserved_kanbanBoard = {}; }");
+                  		lines.push("  if (!customElements.get(tag)) {");
+                  		lines.push("    class KanbanBoard extends HTMLElement {");
+                  		lines.push("      static get observedAttributes(){ return [''data'']; }");
+                  		lines.push("      connectedCallback(){");
+                  		lines.push("        if (!this.shadowRoot) { this.attachShadow({mode:''open''}); }");
+                  		lines.push("        this.render();");
+                  		lines.push("      }");
+                  		lines.push("      attributeChangedCallback(name, oldValue, newValue){");
+                  		lines.push("        if (oldValue !== newValue) { this.render(); }");
+                  		lines.push("      }");
+                  		lines.push("      getBoardId(){ return this.getAttribute(''id'') || ''default''; }");
+                  		lines.push("      getData(){");
+                  		lines.push("        var id = this.getBoardId();");
+                  		lines.push("        var data = null;");
+                  		lines.push("        try { data = JSON.parse(this.getAttribute(''data'') || ''); } catch (e) { data = null; }");
+                  		lines.push("        if (!data || !Array.isArray(data.columns)) { data = page.local.__c8oReserved_kanbanBoard[id]; }");
+                  		lines.push("        if (!data || !Array.isArray(data.columns)) {");
+                  		lines.push("          data = { columns: [");
+                  		lines.push("            { key:''A faire'', title:''A faire'', items:[] },");
+                  		lines.push("            { key:''En cours'', title:''En cours'', items:[] },");
+                  		lines.push("            { key:''Bloque'', title:''Bloque'', items:[] },");
+                  		lines.push("            { key:''Termine'', title:''Termine'', items:[] }");
+                  		lines.push("          ] };");
+                  		lines.push("        }");
+                  		lines.push("        page.local.__c8oReserved_kanbanBoard[id] = data;");
+                  		lines.push("        return data;");
+                  		lines.push("      }");
+                  		lines.push("      esc(s){");
+                  		lines.push("        s = (s == null) ? '' : String(s);");
+                  		lines.push("        return s.replace(/&/g,''&amp;'').replace(/</g,''&lt;'').replace(/>/g,''&gt;'').replace(/\\\"/g,''&quot;'').replace(/\\''/g,''&#39;'');");
+                  		lines.push("      }");
+                  		lines.push("      render(){");
+                  		lines.push("        if (!this.shadowRoot) { return; }");
+                  		lines.push("        var data = this.getData();");
+                  		lines.push("        var html = '';");
+                  		lines.push("        html += \"<style>:host{display:block;font-family:Arial,Helvetica,sans-serif}.kb_wrap{border:1px solid #e0e0e0;border-radius:12px;padding:12px;background:#fff}.kb_cols{display:flex;gap:12px;align-items:flex-start;overflow:auto}.kb_col{min-width:260px;flex:1;background:#f7f8fa;border:1px solid #eceff3;border-radius:12px;padding:10px}.kb_head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.kb_badge{font-size:12px;background:#e8eaed;border-radius:999px;padding:2px 8px}.kb_card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:10px;margin-bottom:8px}.kb_title{font-weight:700;font-size:13px;color:#202124}.kb_desc{margin-top:6px;color:#5f6368;font-size:12px;white-space:pre-wrap}.kb_empty{color:#5f6368;font-size:12px;padding:8px;border:1px dashed #d0d7de;border-radius:10px;background:rgba(255,255,255,0.6)}</style>\";");
+                  		lines.push("        html += \"<div class=''kb_wrap''><div class=''kb_cols''>\";");
+                  		lines.push("        var cols = (data && Array.isArray(data.columns)) ? data.columns : [];");
+                  		lines.push("        for (var i = 0; i < cols.length; i++) {");
+                  		lines.push("          var c = cols[i] || {};");
+                  		lines.push("          var arr = Array.isArray(c.items) ? c.items : [];");
+                  		lines.push("          html += \"<div class=''kb_col''>\";");
+                  		lines.push("          html += \"<div class=''kb_head''><div>\" + this.esc(c.title || c.key || ''Colonne'') + \"</div><div class=''kb_badge''>\" + arr.length + \"</div></div>\";");
+                  		lines.push("          if (arr.length === 0) {");
+                  		lines.push("            html += \"<div class=''kb_empty''>Aucune tache</div>\";");
+                  		lines.push("          } else {");
+                  		lines.push("            for (var j = 0; j < arr.length; j++) {");
+                  		lines.push("              var it = arr[j] || {};");
+                  		lines.push("              html += \"<div class=''kb_card''><div class=''kb_title''>\" + this.esc(it.title || it.name || '') + \"</div>\";");
+                  		lines.push("              if (it.description || it.desc) { html += \"<div class=''kb_desc''>\" + this.esc(it.description || it.desc) + \"</div>\"; }");
+                  		lines.push("              html += \"</div>\";");
+                  		lines.push("            }");
+                  		lines.push("          }");
+                  		lines.push("          html += \"</div>\";");
+                  		lines.push("        }");
+                  		lines.push("        html += \"</div></div>\";");
+                  		lines.push("        this.shadowRoot.innerHTML = html;");
+                  		lines.push("      }");
+                  		lines.push("    }");
+                  		lines.push("    customElements.define(tag, KanbanBoard);");
+                  		lines.push("  }");
+                  		lines.push("  var ids = " + idsJson + ";");
+                  		lines.push("  for (var i = 0; i < ids.length; i++) {");
+                  		lines.push("    var id = ids[i];");
+                  		lines.push("    if (!page.local.__c8oReserved_kanbanBoard[id]) {");
+                  		lines.push("      page.local.__c8oReserved_kanbanBoard[id] = { columns: [");
+                  		lines.push("        { key:''A faire'', title:''A faire'', items:[] },");
+                  		lines.push("        { key:''En cours'', title:''En cours'', items:[] },");
+                  		lines.push("        { key:''Bloque'', title:''Bloque'', items:[] },");
+                  		lines.push("        { key:''Termine'', title:''Termine'', items:[] }");
+                  		lines.push("      ] };");
+                  		lines.push("    }");
+                  		lines.push("    try {");
+                  		lines.push("      var el = document.getElementById(id);");
+                  		lines.push("      if (el && !el.getAttribute(''data'')) {");
+                  		lines.push("        el.setAttribute(''data'', JSON.stringify(page.local.__c8oReserved_kanbanBoard[id]));");
+                  		lines.push("      }");
+                  		lines.push("    } catch (e) {}");
+                  		lines.push("  }");
+                  		lines.push("  return true;");
+                  		lines.push("})()");
+                  		return lines.join("\n");
+                  	}
+                  	function ensureKanbanFallback(formObj, formulasFlow) {
+                  		if (!formObj || !Array.isArray(formObj.formulaire) || !formulasFlow || !Array.isArray(formulasFlow.elements)) {
+                  			return;
+                  		}
+                  		var ids = [];
+                  		var seen = {};
+                  		for (var i = 0; i < formObj.formulaire.length; i++) {
+                  			var el = formObj.formulaire[i];
+                  			var html = null;
+                  			try { html = el && el.type == "description" && el.config ? el.config.html : null; } catch (e) { html = null; }
+                  			if (typeof html != "string" || html.indexOf("kanban-board") == -1) {
+                  				continue;
+                  			}
+                  			var re = /<kanban-board\b[^>]*id\s*=\s*[''"]([^''"]+)[''"][^>]*>/ig;
+                  			var m = null;
+                  			while ((m = re.exec(html)) != null) {
+                  				var id = m[1];
+                  				if (id && !seen[id]) {
+                  					seen[id] = true;
+                  					ids.push(id);
+                  				}
+                  			}
+                  		}
+                  		if (ids.length == 0) {
+                  			return;
+                  		}
+                  		var target = null;
+                  		for (var j = 0; j < formulasFlow.elements.length; j++) {
+                  			var candidate = formulasFlow.elements[j];
+                  			if (!candidate || candidate.type != "business_logic") {
+                  				continue;
+                  			}
+                  			var code = getBusinessLogicCode(candidate);
+                  			if (typeof code == "string" && code.indexOf("kanban-board") != -1 && code.indexOf("customElements.define") != -1) {
+                  				target = candidate;
+                  				break;
+                  			}
+                  		}
+                  		var replace = false;
+                  		if (target == null) {
+                  			replace = true;
+                  		} else {
+                  			var currentCode = getBusinessLogicCode(target);
+                  			if (currentCode.indexOf("Reflect.construct(HTMLElement") != -1 || currentCode.indexOf("function KanbanBoard(){") != -1) {
+                  				replace = true;
+                  			}
+                  		}
+                  		if (replace) {
+                  			if (target == null) {
+                  				target = {
+                  					cat: "action",
+                  					type: "business_logic",
+                  					sources: { self: { enabled: true, vars: { selfVar: { str: "", type: "ts" } } } },
+                  					config: { page: "formulas" },
+                  					id: (new Date().getTime()) + 7000
+                  				};
+                  				target.name = "businessLogic" + target.id;
+                  				formulasFlow.elements.push(target);
+                  			}
+                  			setBusinessLogicCode(target, buildKanbanFallbackCode(ids));
+                  			normalizeBusinessLogic(target, formulasFlow.elements.length + 7);
+                  		}
+                  	}
+                  	for (var fx = 0; fx < formulasFlow.elements.length; fx++) {
+                  		normalizeBusinessLogic(formulasFlow.elements[fx], fx);
+                  	}
+                  	cleanupOrphanFormulaConfig(formulasFlow);
+                  	if (Array.isArray(formObj.actions)) {
+                  		var remainingActions = [];
+                  		for (var ai = 0; ai < formObj.actions.length; ai++) {
+                  			var action = formObj.actions[ai];
+                  			if (action && action.type == "business_logic") {
+                  				normalizeBusinessLogic(action, formulasFlow.elements.length + ai);
+                  				formulasFlow.elements.push(action);
+                  			} else {
+                  				remainingActions.push(action);
+                  			}
+                  		}
+                  		formObj.actions = remainingActions;
+                  	}
+                  	for (var fj = 0; fj < formObj.flows.length; fj++) {
+                  		var flow2 = formObj.flows[fj];
+                  		if (!flow2 || flow2 == formulasFlow || !Array.isArray(flow2.elements)) {
+                  			continue;
+                  		}
+                  		var remainingElements = [];
+                  		for (var ei = 0; ei < flow2.elements.length; ei++) {
+                  			var elem = flow2.elements[ei];
+                  			if (elem && elem.type == "business_logic") {
+                  				normalizeBusinessLogic(elem, formulasFlow.elements.length + ei);
+                  				formulasFlow.elements.push(elem);
+                  			} else {
+                  				remainingElements.push(elem);
+                  			}
+                  		}
+                  		flow2.elements = remainingElements;
+                  		cleanupOrphanFormulaConfig(flow2);
+                  	}
+                  	if (Array.isArray(formObj.formulaire)) {
+                  		var byId = {};
+                  		for (var fi2 = 0; fi2 < formObj.formulaire.length; fi2++) {
+                  			var formElt = formObj.formulaire[fi2];
+                  			if (formElt && formElt.id != null) {
+                  				byId["" + formElt.id] = formElt;
+                  			}
+                  		}
+                  		for (var pi2 = 0; pi2 < formObj.formulaire.length; pi2++) {
+                  			var parentElt = formObj.formulaire[pi2];
+                  			if (!parentElt || !Array.isArray(parentElt.childrenRefs)) {
+                  				continue;
+                  			}
+                  			for (var ci = 0; ci < parentElt.childrenRefs.length; ci++) {
+                  				var childId = parentElt.childrenRefs[ci];
+                  				var childElt = byId["" + childId];
+                  				if (childElt) {
+                  					childElt.parentRef = parentElt.id;
+                  				}
+                  			}
+                  		}
+                  	}
+                  	ensureKanbanFallback(formObj, formulasFlow);
+                  	formObj = repairBrokenUnicode(formObj);
+                  }
+                  form = JSON.stringify(formObj);
                   '
         ↓ifJson [steps.IfThenElseStep-1732031540875]: 
           condition: typeof form != "undefined"
@@ -414,3 +1057,4 @@ responseTimeout: 300
   value: false
 ↓language [variables.RequestableVariable-1730384347463]: 
   value: en
+↓authenticatedUser [variables.RequestableVariable-1892000000201]: 

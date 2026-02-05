@@ -1,9 +1,19 @@
 accessibility: Hidden
-responseTimeout: 300
+responseTimeout: 700
+↓EnsureAvailableActions [steps.SimpleStep-1736000000100]: 
+  expression: |
+    'try {
+      include("./js/ai_helpers.js");
+      var availableActions = JSON.stringify(getAvailableActions());
+      var availableSources = JSON.stringify(getAvailableSources());
+    } catch (e) {
+    }'
 ↓Call_Transaction [steps.TransactionStep-1686583666287]: 
   sourceTransaction: lib_C8Oforms_AI.GPT.GenerateJsonFormChat
   ↓prompt [variables.StepVariable-1686583666289]: 
   ↓reset [variables.StepVariable-1686583666291]: 
+  ↓availableActions [variables.StepVariable-1890000000101]: 
+  ↓availableSources [variables.StepVariable-1890000000103]: 
 ↓response1 [steps.SimpleSourceStep-1686666504666]: 
   sourceDefinition: 
     - xmlizable: 
@@ -19,27 +29,557 @@ responseTimeout: 300
     '//include(''./js/sample.js'');
     //response = JSON.stringify(sample);
     
-    let resp;
-    try { 
-    	if(response.indexOf("```json") == 0){
-    		response = response.substring(7);
-    		var idx = response.indexOf("```");
-    		response = response.substring(0, idx);
+    var resp = null;
+    var raw = (response == null) ? "" : ("" + response);
+    
+    function tryParseJson(text) {
+    	if (text == null) {
+    		return null;
     	}
-    	resp = JSON.parse(response);
-    	resp.chatSummary = prompt;
+    	var t = ("" + text).trim();
+    	if (t === "") {
+    		return null;
+    	}
+    	try {
+    		return JSON.parse(t);
+    	} catch (e) {
+    		return null;
+    	}
     }
-    catch (e) { 
-    	try{
-    		log.warn("a parsing error occured on the first attempt: " + e);
-    		resp = JSON.parse(response.substring(0, response.length -2));
+    
+    function extractFirstJsonPayload(text) {
+    	if (text == null) {
+    		return "";
     	}
-    	catch(e){
-    		log.warn("a parsing error occured on the second attempt: " + e);
-    		resp = ({error: response});
+    	var s = "" + text;
+    	var objPos = s.indexOf("{");
+    	var arrPos = s.indexOf("[");
+    	var start = -1;
+    	var open = "";
+    	var close = "";
+    	
+    	if (objPos >= 0 && (arrPos < 0 || objPos < arrPos)) {
+    		start = objPos;
+    		open = "{";
+    		close = "}";
+    	} else if (arrPos >= 0) {
+    		start = arrPos;
+    		open = "[";
+    		close = "]";
+    	}
+    	if (start < 0) {
+    		return "";
     	}
     	
+    	var depth = 0;
+    	var inString = false;
+    	var escapeNext = false;
+    	for (var i = start; i < s.length; i++) {
+    		var ch = s.charAt(i);
+    		if (inString) {
+    			if (escapeNext) {
+    				escapeNext = false;
+    			} else if (ch == "\\\\") {
+    				escapeNext = true;
+    			} else if (ch == "\"") {
+    				inString = false;
+    			}
+    		} else {
+    			if (ch == "\"") {
+    				inString = true;
+    			} else if (ch == open) {
+    				depth++;
+    			} else if (ch == close) {
+    				depth--;
+    				if (depth == 0) {
+    					return s.substring(start, i + 1);
+    				}
+    			}
+    		}
+    	}
+    	return "";
+    }
+    
+    var parsed = tryParseJson(raw);
+    if (parsed == null) {
+    	var unfenced = raw;
+    	if (unfenced.indexOf("```") != -1) {
+    		unfenced = unfenced.replace(/```json/gi, "").replace(/```/g, "");
+    	}
+    	parsed = tryParseJson(unfenced);
+    }
+    if (parsed == null) {
+    	var extracted = extractFirstJsonPayload(raw);
+    	parsed = tryParseJson(extracted);
+    }
+    
+    if (parsed == null) {
+    	log.warn("a parsing error occured on the first attempt: non JSON payload");
+    	log.warn("a parsing error occured on the second attempt: non JSON payload");
+    	resp = { error: raw, pages: [] };
+    } else {
+    	resp = parsed;
+    	resp.chatSummary = prompt;
     }'
+↓normalizeBusinessLogicShape [steps.SimpleStep-1891000000300]: 
+  expression: |
+    'try {
+    	if (!resp || typeof resp != "object" || Array.isArray(resp) || resp.error) {
+    		// nothing
+    	} else {
+    		if (!Array.isArray(resp.flows)) {
+    			resp.flows = [];
+    		}
+    		var formulasFlow = null;
+    		for (var fi = 0; fi < resp.flows.length; fi++) {
+    			var flow = resp.flows[fi];
+    			if (flow && (flow.id == "formulas" || flow.name == "formulas")) {
+    				formulasFlow = flow;
+    				break;
+    			}
+    		}
+    		if (formulasFlow == null) {
+    			formulasFlow = { id: "formulas", elements: [] };
+    			resp.flows.push(formulasFlow);
+    		}
+    		if (!Array.isArray(formulasFlow.elements)) {
+    			formulasFlow.elements = [];
+    		}
+    		function normalizeBusinessLogic(elem, idxHint) {
+    			if (!elem || typeof elem != "object") {
+    				return;
+    			}
+    			if ((elem.type == null || elem.type === "")
+    				&& elem.sources && typeof elem.sources == "object" && !Array.isArray(elem.sources)) {
+    				if (elem.sources.type != null) {
+    					elem.type = "" + elem.sources.type;
+    					try { delete elem.sources.type; } catch (e) {}
+    				} else if (elem.sources.self && typeof elem.sources.self == "object" && !Array.isArray(elem.sources.self)
+    					&& elem.sources.self.type != null) {
+    					elem.type = "" + elem.sources.self.type;
+    					try { delete elem.sources.self.type; } catch (e00) {}
+    				}
+    			}
+    			if (elem.type != "business_logic") {
+    				return;
+    			}
+    			if (elem.sources && typeof elem.sources == "object" && !Array.isArray(elem.sources)) {
+    				var sourceMetaCandidates = [elem.sources];
+    				if (elem.sources.self && typeof elem.sources.self == "object" && !Array.isArray(elem.sources.self)) {
+    					sourceMetaCandidates.push(elem.sources.self);
+    				}
+    				for (var smi = 0; smi < sourceMetaCandidates.length; smi++) {
+    					var sourceMeta = sourceMetaCandidates[smi];
+    					if (elem.id == null && sourceMeta.id != null) {
+    						elem.id = sourceMeta.id;
+    						try { delete sourceMeta.id; } catch (e0) {}
+    					}
+    					if ((elem.name == null || elem.name === "") && sourceMeta.name != null) {
+    						elem.name = "" + sourceMeta.name;
+    						try { delete sourceMeta.name; } catch (e1) {}
+    					}
+    					if ((elem.cat == null || elem.cat === "") && sourceMeta.cat != null) {
+    						elem.cat = "" + sourceMeta.cat;
+    						try { delete sourceMeta.cat; } catch (e2) {}
+    					}
+    					if ((elem.type == null || elem.type === "") && sourceMeta.type != null) {
+    						elem.type = "" + sourceMeta.type;
+    						try { delete sourceMeta.type; } catch (e3) {}
+    					}
+    					if ((!elem.config || typeof elem.config != "object" || Array.isArray(elem.config))
+    						&& sourceMeta.config && typeof sourceMeta.config == "object" && !Array.isArray(sourceMeta.config)) {
+    						elem.config = sourceMeta.config;
+    						try { delete sourceMeta.config; } catch (e4) {}
+    					}
+    				}
+    			}
+    			if ((elem.id == null || elem.id === "") && elem.config && typeof elem.config == "object" && elem.config.id != null) {
+    				elem.id = elem.config.id;
+    				try { delete elem.config.id; } catch (e6) {}
+    			}
+    			if ((elem.name == null || elem.name === "") && elem.config && typeof elem.config == "object" && elem.config.name != null) {
+    				elem.name = "" + elem.config.name;
+    				try { delete elem.config.name; } catch (e7) {}
+    			}
+    			if (!elem.cat) {
+    				elem.cat = "action";
+    			}
+    			if (!elem.sources || typeof elem.sources != "object" || Array.isArray(elem.sources)) {
+    				elem.sources = {};
+    			}
+    			if (!elem.sources.self || typeof elem.sources.self != "object" || Array.isArray(elem.sources.self)) {
+    				elem.sources.self = { enabled: true, vars: {} };
+    			}
+    			if (!elem.sources.self.vars || typeof elem.sources.self.vars != "object" || Array.isArray(elem.sources.self.vars)) {
+    				elem.sources.self.vars = {};
+    			}
+    			if (!elem.sources.self.vars.selfVar || typeof elem.sources.self.vars.selfVar != "object" || Array.isArray(elem.sources.self.vars.selfVar)) {
+    				elem.sources.self.vars.selfVar = { str: "", type: "ts" };
+    			}
+    			if (elem.sources.self.vars.selfVar.str == null) {
+    				elem.sources.self.vars.selfVar.str = "";
+    			}
+    			elem.sources.self.vars.selfVar.type = "ts";
+    			if (!elem.config || typeof elem.config != "object" || Array.isArray(elem.config)) {
+    				elem.config = {};
+    			}
+    			elem.config.page = "formulas";
+    			if (elem.id == null || elem.id === "") {
+    				var idxValue = (typeof idxHint == "number" && idxHint >= 0) ? idxHint : 0;
+    				elem.id = (new Date().getTime()) + idxValue;
+    			}
+    			if (elem.name == null || elem.name === "") {
+    				elem.name = "businessLogic" + elem.id;
+    			}
+    			if ("expression" in elem) {
+    				try { delete elem.expression; } catch (e5) {}
+    			}
+    		}
+    		function cleanupOrphanFormulaConfig(flowObj) {
+    			if (!flowObj || !Array.isArray(flowObj.elements)) {
+    				return;
+    			}
+    			var cleaned = [];
+    			for (var ce = 0; ce < flowObj.elements.length; ce++) {
+    				var current = flowObj.elements[ce];
+    				if (current == null || typeof current != "object") {
+    					continue;
+    				}
+    				var currentKeys = Object.keys(current);
+    				var keysAreMetaOnly = true;
+    				for (var cki = 0; cki < currentKeys.length; cki++) {
+    					var ck = currentKeys[cki];
+    					if (ck != "config" && ck != "id" && ck != "name" && ck != "sources") {
+    						keysAreMetaOnly = false;
+    						break;
+    					}
+    				}
+    				var isMetaOnly = !current.type && !current.cat && keysAreMetaOnly;
+    				if (isMetaOnly) {
+    					if (cleaned.length > 0) {
+    						var prev = cleaned[cleaned.length - 1];
+    						if (prev && prev.type == "business_logic") {
+    							if (!prev.config || typeof prev.config != "object") {
+    								prev.config = {};
+    							}
+    							if (current.config && typeof current.config == "object" && !Array.isArray(current.config)) {
+    								for (var mk in current.config) {
+    									if (Object.prototype.hasOwnProperty.call(current.config, mk) && prev.config[mk] == null) {
+    										prev.config[mk] = current.config[mk];
+    									}
+    								}
+    							}
+    							if (prev.id == null && current.id != null) {
+    								prev.id = current.id;
+    							}
+    							if ((prev.name == null || prev.name === "") && current.name != null) {
+    								prev.name = "" + current.name;
+    							}
+    							if ((!prev.sources || typeof prev.sources != "object" || Array.isArray(prev.sources))
+    								&& current.sources && typeof current.sources == "object" && !Array.isArray(current.sources)) {
+    								prev.sources = current.sources;
+    							}
+    							normalizeBusinessLogic(prev, ce);
+    							continue;
+    						}
+    					}
+    					continue;
+    				}
+    				cleaned.push(current);
+    			}
+    			flowObj.elements = cleaned;
+    		}
+    		function repairBrokenUnicode(value) {
+    			if (value == null) {
+    				return value;
+    			}
+    			if (typeof value == "string") {
+    				return value.replace(/\u0000([0-9a-fA-F]{2})/g, function(match, hex) {
+    					try {
+    						return String.fromCharCode(parseInt(hex, 16));
+    					} catch (e) {
+    						return match;
+    					}
+    				});
+    			}
+    			if (Array.isArray(value)) {
+    				for (var ri = 0; ri < value.length; ri++) {
+    					value[ri] = repairBrokenUnicode(value[ri]);
+    				}
+    				return value;
+    			}
+    			if (typeof value == "object") {
+    				for (var rk in value) {
+    					if (Object.prototype.hasOwnProperty.call(value, rk)) {
+    						value[rk] = repairBrokenUnicode(value[rk]);
+    					}
+    				}
+    				return value;
+    			}
+    			return value;
+    		}
+    		function removeHallucinatedMetaKeys(value) {
+    			var banned = {
+    				reasoning: true,
+    				analysis: true,
+    				rationale: true,
+    				explanation: true,
+    				thoughts: true,
+    				chainOfThought: true,
+    				clarificationRequest: true,
+    				nextQuestion: true,
+    				nextQuestions: true,
+    				followUpQuestion: true,
+    				pleaseConfirm: true
+    			};
+    			function walk(node) {
+    				if (node == null) {
+    					return;
+    				}
+    				if (Array.isArray(node)) {
+    					for (var ai = 0; ai < node.length; ai++) {
+    						walk(node[ai]);
+    					}
+    					return;
+    				}
+    				if (typeof node == "object") {
+    					for (var k in node) {
+    						if (!Object.prototype.hasOwnProperty.call(node, k)) {
+    							continue;
+    						}
+    						if (banned[k] === true) {
+    							try { delete node[k]; } catch (e) {}
+    							continue;
+    						}
+    						walk(node[k]);
+    					}
+    				}
+    			}
+    			walk(value);
+    		}
+    		function getBusinessLogicCode(elem) {
+    			try {
+    				if (elem && elem.sources && elem.sources.self && elem.sources.self.vars
+    					&& elem.sources.self.vars.selfVar && typeof elem.sources.self.vars.selfVar.str == "string") {
+    					return elem.sources.self.vars.selfVar.str;
+    				}
+    			} catch (e) {}
+    			return "";
+    		}
+    		function setBusinessLogicCode(elem, code) {
+    			if (!elem.sources || typeof elem.sources != "object" || Array.isArray(elem.sources)) {
+    				elem.sources = {};
+    			}
+    			if (!elem.sources.self || typeof elem.sources.self != "object" || Array.isArray(elem.sources.self)) {
+    				elem.sources.self = { enabled: true, vars: {} };
+    			}
+    			if (!elem.sources.self.vars || typeof elem.sources.self.vars != "object" || Array.isArray(elem.sources.self.vars)) {
+    				elem.sources.self.vars = {};
+    			}
+    			if (!elem.sources.self.vars.selfVar || typeof elem.sources.self.vars.selfVar != "object" || Array.isArray(elem.sources.self.vars.selfVar)) {
+    				elem.sources.self.vars.selfVar = { str: "", type: "ts" };
+    			}
+    			elem.sources.self.vars.selfVar.str = code;
+    			elem.sources.self.vars.selfVar.type = "ts";
+    		}
+    		function buildKanbanFallbackCode(idsList) {
+    			var idsJson = "[]";
+    			try { idsJson = JSON.stringify(idsList || []); } catch (e) {}
+    			var lines = [];
+    			lines.push("(async function(){");
+    			lines.push("  var tag = ''kanban-board'';");
+    			lines.push("  if (!page.local.__c8oReserved_kanbanBoard) { page.local.__c8oReserved_kanbanBoard = {}; }");
+    			lines.push("  function defaultColumns(){ return [{ key:''A faire'', title:''A faire'', items:[] }, { key:''En cours'', title:''En cours'', items:[] }, { key:''Bloque'', title:''Bloque'', items:[] }, { key:''Termine'', title:''Termine'', items:[] }]; }");
+    			lines.push("  function normalizeStatus(v){ var s = (v == null ? '' : String(v)).toLowerCase(); if (s.indexOf(''en cours'') != -1 || s.indexOf(''doing'') != -1 || s.indexOf(''in progress'') != -1) return ''En cours''; if (s.indexOf(''bloque'') != -1 || s.indexOf(''blocked'') != -1) return ''Bloque''; if (s.indexOf(''termine'') != -1 || s.indexOf(''done'') != -1) return ''Termine''; return ''A faire''; }");
+    			lines.push("  function toText(v){ if (v == null) return ''; if (typeof v == ''object'' && v.value != null) return '' + v.value; return '' + v; }");
+    			lines.push("  function rowsFromGrid(gridName){");
+    			lines.push("    if (!gridName) return [];");
+    			lines.push("    try {");
+    			lines.push("      if (page && page.local && page.local.sourceValue && page.local.sourceValue[gridName] != null) {");
+    			lines.push("        var raw = page.local.sourceValue[gridName];");
+    			lines.push("        if (Array.isArray(raw)) return raw;");
+    			lines.push("        if (raw && Array.isArray(raw.rows)) return raw.rows;");
+    			lines.push("        if (raw && Array.isArray(raw.data)) return raw.data;");
+    			lines.push("      }");
+    			lines.push("    } catch (e) {}");
+    			lines.push("    return [];");
+    			lines.push("  }");
+    			lines.push("  function buildColumnsFromRows(rows){");
+    			lines.push("    var grouped = { ''A faire'': [], ''En cours'': [], ''Bloque'': [], ''Termine'': [] };");
+    			lines.push("    if (!Array.isArray(rows)) rows = [];");
+    			lines.push("    for (var i = 0; i < rows.length; i++) {");
+    			lines.push("      var r = rows[i] || {};");
+    			lines.push("      var title = toText(r.Name != null ? r.Name : (r.title != null ? r.title : r.Make));");
+    			lines.push("      var desc = toText(r.Description != null ? r.Description : (r.description != null ? r.description : r.Model));");
+    			lines.push("      var stRaw = r.Status != null ? r.Status : (r.status != null ? r.status : (r.State != null ? r.State : r.state));");
+    			lines.push("      var st = normalizeStatus(toText(stRaw));");
+    			lines.push("      grouped[st].push({ title: title, description: desc });");
+    			lines.push("    }");
+    			lines.push("    return [{ key:''A faire'', title:''A faire'', items: grouped[''A faire''] }, { key:''En cours'', title:''En cours'', items: grouped[''En cours''] }, { key:''Bloque'', title:''Bloque'', items: grouped[''Bloque''] }, { key:''Termine'', title:''Termine'', items: grouped[''Termine''] }];");
+    			lines.push("  }");
+    			lines.push("  if (!customElements.get(tag)) {");
+    			lines.push("    class KanbanBoard extends HTMLElement {");
+    			lines.push("      static get observedAttributes(){ return [''data'', ''source-grid'']; }");
+    			lines.push("      connectedCallback(){ if (!this.shadowRoot) { this.attachShadow({mode:''open''}); } this.render(); }");
+    			lines.push("      attributeChangedCallback(name, oldValue, newValue){ if (oldValue !== newValue) { this.render(); } }");
+    			lines.push("      getBoardId(){ return this.getAttribute(''id'') || ''default''; }");
+    			lines.push("      getData(){");
+    			lines.push("        var id = this.getBoardId();");
+    			lines.push("        var data = null;");
+    			lines.push("        try { data = JSON.parse(this.getAttribute(''data'') || ''); } catch (e) { data = null; }");
+    			lines.push("        if (!data || !Array.isArray(data.columns)) { data = page.local.__c8oReserved_kanbanBoard[id]; }");
+    			lines.push("        if (!data || !Array.isArray(data.columns)) {");
+    			lines.push("          var gridName = this.getAttribute(''source-grid'') || '';");
+    			lines.push("          var rows = rowsFromGrid(gridName);");
+    			lines.push("          var cols = buildColumnsFromRows(rows);");
+    			lines.push("          if (!cols || !Array.isArray(cols) || cols.length == 0) { cols = defaultColumns(); }");
+    			lines.push("          data = { columns: cols };");
+    			lines.push("        }");
+    			lines.push("        page.local.__c8oReserved_kanbanBoard[id] = data;");
+    			lines.push("        return data;");
+    			lines.push("      }");
+    			lines.push("      esc(s){ s = (s == null) ? '' : String(s); return s.replace(/&/g,''&amp;'').replace(/</g,''&lt;'').replace(/>/g,''&gt;'').replace(/\\\"/g,''&quot;'').replace(/\\''/g,''&#39;''); }");
+    			lines.push("      render(){");
+    			lines.push("        if (!this.shadowRoot) { return; }");
+    			lines.push("        var data = this.getData();");
+    			lines.push("        var cols = (data && Array.isArray(data.columns)) ? data.columns : [];");
+    			lines.push("        var html = \"<style>:host{display:block;font-family:Arial,Helvetica,sans-serif}.kb_wrap{border:1px solid #e0e0e0;border-radius:12px;padding:12px;background:#fff}.kb_cols{display:flex;gap:12px;align-items:flex-start;overflow:auto}.kb_col{min-width:260px;flex:1;background:#f7f8fa;border:1px solid #eceff3;border-radius:12px;padding:10px}.kb_head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.kb_badge{font-size:12px;background:#e8eaed;border-radius:999px;padding:2px 8px}.kb_card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:10px;margin-bottom:8px}.kb_title{font-weight:700;font-size:13px;color:#202124}.kb_desc{margin-top:6px;color:#5f6368;font-size:12px;white-space:pre-wrap}.kb_empty{color:#5f6368;font-size:12px;padding:8px;border:1px dashed #d0d7de;border-radius:10px;background:rgba(255,255,255,0.6)}</style><div class=''kb_wrap''><div class=''kb_cols''>\";");
+    			lines.push("        for (var i = 0; i < cols.length; i++) {");
+    			lines.push("          var c = cols[i] || {}; var arr = Array.isArray(c.items) ? c.items : [];");
+    			lines.push("          html += \"<div class=''kb_col''><div class=''kb_head''><div>\" + this.esc(c.title || c.key || ''Colonne'') + \"</div><div class=''kb_badge''>\" + arr.length + \"</div></div>\";");
+    			lines.push("          if (arr.length === 0) { html += \"<div class=''kb_empty''>Aucune tache</div>\"; } else {");
+    			lines.push("            for (var j = 0; j < arr.length; j++) { var it = arr[j] || {}; html += \"<div class=''kb_card''><div class=''kb_title''>\" + this.esc(it.title || it.name || '') + \"</div>\"; if (it.description || it.desc) { html += \"<div class=''kb_desc''>\" + this.esc(it.description || it.desc) + \"</div>\"; } html += \"</div>\"; }");
+    			lines.push("          }");
+    			lines.push("          html += \"</div>\";");
+    			lines.push("        }");
+    			lines.push("        html += \"</div></div>\";");
+    			lines.push("        this.shadowRoot.innerHTML = html;");
+    			lines.push("      }");
+    			lines.push("    }");
+    			lines.push("    customElements.define(tag, KanbanBoard);");
+    			lines.push("  }");
+    			lines.push("  var ids = " + idsJson + ";");
+    			lines.push("  for (var i = 0; i < ids.length; i++) {");
+    			lines.push("    var id = ids[i];");
+    			lines.push("    if (!page.local.__c8oReserved_kanbanBoard[id]) { page.local.__c8oReserved_kanbanBoard[id] = { columns: defaultColumns() }; }");
+    			lines.push("    try { var el = document.getElementById(id); if (el && !el.getAttribute(''data'')) { el.setAttribute(''data'', JSON.stringify(page.local.__c8oReserved_kanbanBoard[id])); } } catch (e) {}");
+    			lines.push("  }");
+    			lines.push("  return true;");
+    			lines.push("})()");
+    			return lines.join("\n");
+    		}
+    		function ensureKanbanFallback(respObj, formulasFlowObj) {
+    			if (!respObj || !Array.isArray(respObj.formulaire) || !formulasFlowObj || !Array.isArray(formulasFlowObj.elements)) {
+    				return;
+    			}
+    			var firstGridName = null;
+    			for (var gi = 0; gi < respObj.formulaire.length; gi++) {
+    				var gel = respObj.formulaire[gi];
+    				if (gel && gel.type == "grid" && typeof gel.name == "string" && gel.name.length > 0) {
+    					firstGridName = gel.name;
+    					break;
+    				}
+    			}
+    			var ids = [];
+    			var seen = {};
+    			for (var i = 0; i < respObj.formulaire.length; i++) {
+    				var el = respObj.formulaire[i];
+    				var html = null;
+    				try { html = el && el.type == "description" && el.config ? el.config.html : null; } catch (e) { html = null; }
+    				if (typeof html != "string" || html.indexOf("kanban-board") == -1) {
+    					continue;
+    				}
+    				if (firstGridName != null && html.indexOf("source-grid=") == -1) {
+    					try {
+    						var injected = html.replace(/<kanban-board\b/i, "<kanban-board source-grid=''" + firstGridName + "''");
+    						if (injected != html) {
+    							html = injected;
+    							el.config.html = injected;
+    						}
+    					} catch (eInject) {
+    					}
+    				}
+    				var re = /<kanban-board\b[^>]*id\s*=\s*[''"]([^''"]+)[''"][^>]*>/ig;
+    				var m = null;
+    				while ((m = re.exec(html)) != null) {
+    					var id = m[1];
+    					if (id && !seen[id]) { seen[id] = true; ids.push(id); }
+    				}
+    			}
+    			if (ids.length == 0) {
+    				return;
+    			}
+    			var target = null;
+    			for (var j = 0; j < formulasFlowObj.elements.length; j++) {
+    				var candidate = formulasFlowObj.elements[j];
+    				if (!candidate || candidate.type != "business_logic") {
+    					continue;
+    				}
+    				var code = getBusinessLogicCode(candidate);
+    				if (typeof code == "string" && code.indexOf("kanban-board") != -1 && code.indexOf("customElements.define") != -1) {
+    					target = candidate;
+    					break;
+    				}
+    			}
+    			var replace = true;
+    			if (replace) {
+    				if (target == null) {
+    					target = {
+    						cat: "action",
+    						type: "business_logic",
+    						sources: { self: { enabled: true, vars: { selfVar: { str: "", type: "ts" } } } },
+    						config: { page: "formulas" },
+    						id: (new Date().getTime()) + 7000
+    					};
+    					target.name = "businessLogic" + target.id;
+    					formulasFlowObj.elements.push(target);
+    				}
+    				setBusinessLogicCode(target, buildKanbanFallbackCode(ids));
+    				normalizeBusinessLogic(target, formulasFlowObj.elements.length + 7);
+    			}
+    		}
+    		for (var fe = 0; fe < formulasFlow.elements.length; fe++) {
+    			normalizeBusinessLogic(formulasFlow.elements[fe], fe);
+    		}
+    		cleanupOrphanFormulaConfig(formulasFlow);
+    		if (Array.isArray(resp.actions)) {
+    			var keptActions = [];
+    			for (var ai = 0; ai < resp.actions.length; ai++) {
+    				var action = resp.actions[ai];
+    				if (action && action.type == "business_logic") {
+    					normalizeBusinessLogic(action, formulasFlow.elements.length + ai);
+    					formulasFlow.elements.push(action);
+    				} else {
+    					keptActions.push(action);
+    				}
+    			}
+    			resp.actions = keptActions;
+    		}
+    		for (var f = 0; f < resp.flows.length; f++) {
+    			var flow2 = resp.flows[f];
+    			if (!flow2 || flow2 == formulasFlow || !Array.isArray(flow2.elements)) {
+    				continue;
+    			}
+    			var keptElements = [];
+    			for (var e = 0; e < flow2.elements.length; e++) {
+    				var elem = flow2.elements[e];
+    				if (elem && elem.type == "business_logic") {
+    					normalizeBusinessLogic(elem, formulasFlow.elements.length + e);
+    					formulasFlow.elements.push(elem);
+    				} else {
+    					keptElements.push(elem);
+    				}
+    			}
+    				flow2.elements = keptElements;
+    				cleanupOrphanFormulaConfig(flow2);
+    			}
+    			ensureKanbanFallback(resp, formulasFlow);
+    			resp = repairBrokenUnicode(resp);
+    			removeHallucinatedMetaKeys(resp);
+    		}
+    	} catch (e) {
+    		log.warn("normalizeBusinessLogicShape failed: " + e);
+    	}'
 ↓jIf [steps.IfStep-1686753917055]: 
   condition: (query = resp.thumbnailFromPexelsPrompt) != undefined
   ↓Call_Transaction [steps.TransactionStep-1686753500917]: 
@@ -69,7 +609,7 @@ responseTimeout: 300
       	log.error("thumbnailUrl " + e);
       }'
 ↓jIterator [steps.SimpleIteratorStep-1686923684472]: 
-  expression: resp.pages
+  expression: '(resp && Array.isArray(resp.pages)) ? resp.pages : []'
   ↓jIf [steps.IfStep-1686923717345]: 
     condition: (query = item.bannerFromPexelsPrompt) != undefined
     ↓Call_Transaction [steps.TransactionStep-1686923717348]: 

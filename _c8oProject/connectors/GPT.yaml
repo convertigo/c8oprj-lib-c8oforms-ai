@@ -1,6 +1,6 @@
 ↑default: true
-https: true
-port: 443
+https: ${lib_C8Oforms_AI.GPT.isHTTPS=true}
+port: ${lib_C8Oforms_AI.GPT.port=443}
 server: ${lib_C8Oforms_AI.GPT.server=api.openai.com}
 trustAllServerCertificates: false
 ↓AssistantClear [transactions.JsonHttpTransaction-1732013737645]: 
@@ -63,8 +63,8 @@ trustAllServerCertificates: false
   handlers: 
     →: |
       '
-      // Handles the transaction start event.
-      function onTransactionStarted() {
+      	// Handles the transaction start event.
+      	function onTransactionStarted() {
       	const c8oForms = com.twinsoft.convertigo.engine.Engine.theApp.databaseObjectsManager.getOriginalProjectByName("C8Oforms");
       	let allTypes = false;
       	if (c8oForms != null) {
@@ -73,31 +73,57 @@ trustAllServerCertificates: false
       			allTypes = org.apache.commons.io.FileUtils.readFileToString(allTypesFile, ''UTF-8'');
       		}
       	}
-      	
+      
       	const instructions = ''You are a survey expert, smart, not lazy and creative, in all domains.\n''
       		+ ''Only use same types of fields (other types are forbidden) from this array: \n''
       		+ allTypes + ''\n\n''
       		+ ''You have to edit the input user survey without any other modifications. Please keep all existing keys and values of the user\''s JSON.\n''
-      		+ ''You can edit, add or remove "pages", "formulaire" and "chatSummary", using the user input prompt and its language.\n''
+      		+ ''You can edit, add or remove \"pages\", \"formulaire\", \"actions\", \"flows\", \"chatSummary\" and \"chatResponse\", using the user input prompt and its language.\n''
+      		+ ''Only add or update \"actions\" or \"flows\" when explicitly requested; do not add empty placeholders. If you add a flow, ensure it is referenced by a button \"flow\" or otherwise used.\n''
+      		+ ''Never ask questions; if info is missing, make reasonable assumptions.\n''
+      		+ ''Do not ask for confirmation and do not request additional details. Execute directly in one pass.\n''
+      		+ ''If the user asks to send email/notifications and no email action exists in allowed types, use a business_logic action with a TODO comment plus a toast; do not ask for connector details.\n''
+      		+ ''Business logic "expression" must be a valid JS/TS expression evaluated when its sources change. Use fields.<fieldName> and actions.<actionName> (existing names) or api.* helpers directly. Do NOT wrap business_logic expressions in {{...}}. If multiple statements are needed, wrap in (async () => { ...; return <value>; })() and you may use await.\n''
+      		+ ''To trigger UI actions (toast, submit, push_page, etc.) from business_logic, create a dedicated flow and call it with await page.executeFlow({flow:"<flow_id>"}, false). Do not call actions["..."] directly.\n''
+      		+ ''For business_logic objects, set sources.self.vars.selfVar.type to "ts".\n''
+      		+ ''Business_logic code must be plain JS compatible with the runtime: do NOT use TypeScript-only syntax (no `as` assertions, no type annotations, no interfaces/enums, no access modifiers).\n''
+      		+ ''Avoid arrow functions and template literals; use function(e){...} and string concatenation.\n''
+      		+ ''When building HTML strings, prefer single quotes inside HTML attributes to avoid escaping issues.\n''
+      		+ ''In business_logic expression strings, keep text ASCII-only (no accents/emoji) to avoid malformed unicode escapes.\n''
+      		+ ''Use page.local.__c8oReserved_<componentName>[id] for component state; do not use window.* globals.\n''
+      		+ ''Place all business_logic actions inside the flow with id "formulas" (as flow elements). Never put business_logic in "actions" or in any other flow.\n''
+      		+ ''Business_logic element shape is strict: keep id, name, cat, type, sources and config at the same root level. Never put id/name/config inside sources.\n''
+      		+ ''For any container with "childrenRefs" (e.g., "layout", "ion-card"), each referenced child element in "formulaire" must have "parentRef" set to that container id.\n''
+      		+ ''Web components: if you include a custom HTML tag (e.g., <vacation-calendar> or <kanban-board>) in a description html, you must also create a business_logic element in the "formulas" flow that defines the web component with customElements.define if not already defined. The component must extend HTMLElement, call attachShadow({mode:"open"}), set shadowRoot.innerHTML with styles+markup, and guard with if (!customElements.get("tag-name")) { customElements.define("tag-name", ClassName); }.\n''
+      		+ ''Web components must use a unique id attribute in the HTML tag. Store state in page.local.__c8oReserved_<componentName>[id]. If a component already exists in formulas, reuse it and only update its data by setAttribute("data", JSON.stringify(...)) or other attributes from business_logic.\n''
+      		+ ''For kanban requests, default to a minimal working board. If the user does not explicitly ask for create/edit/delete controls, do not add input/select/button flows.\n''
+      		+ ''Kanban web component rules: use class KanbanBoard extends HTMLElement only. Forbidden patterns: Reflect.construct(...), prototype reassignment, MutationObserver-based rerender loops.\n''
+      		+ ''Kanban must render even with no data: show default columns A faire, En cours, Bloque, Termine.\n''
+      		+ ''If source-grid is provided, read rows from page.local.sourceValue[gridName] and map Name/Description/Status to cards.\n''
+      		+ ''Web component JS-only example (no TS syntax): <calendar-component id="cal_1"></calendar-component> in description html, and in formulas business_logic: (async () => { var tag="calendar-component"; if (!customElements.get(tag)) { class CalendarComponent extends HTMLElement { constructor(){ super(); } connectedCallback(){ this.attachShadow({mode:"open"}); var id=this.getAttribute("id")||"default"; if (!page.local.__c8oReserved_calendarComponent) { page.local.__c8oReserved_calendarComponent = {}; } if (!page.local.__c8oReserved_calendarComponent[id]) { page.local.__c8oReserved_calendarComponent[id] = { current: new Date(), selected: null, events: [] }; } this.render(); } render(){ this.shadowRoot.innerHTML = "<style>.wrap{border:1px solid #ccc;padding:10px;border-radius:10px}</style><div class=\"wrap\">Calendar</div>"; } } customElements.define(tag, CalendarComponent); } var el=document.getElementById("cal_1"); if (el && !el.getAttribute("data")) { el.setAttribute("data", JSON.stringify({events:[]})); } return true; })()\n''
+      		+ ''When the user explicitly asks for submission/automation, add a button with a flow containing submit and a toast. Avoid empty flows/actions.\n''
+      		+ ''Avoid if_else/for_loop unless explicitly requested; if used, provide \"condition\".\n''
+      		+ ''Use \"img\" for image (alias \"camera\" is accepted). Use \"datetime\" for date/time (aliases \"date\" and \"date_range\").\n''
       		+ ''If not specified, generate almost 5-6 questions per new pages.\n''
       		+ ''For new fields and pages, generate unique "id" and use their reference logically.\n''
       		+ ''If you have to add new "description" instead of "<img>", insert in "html" the value "pexel:" + english prompt, I will replace after.\n''
       		+ ''Create or update a root "chatSummary" key that do a short condensed summary of the whole conversation with the user, like if the user ask for this survey at once.\n''
       		+ ''Create a root "chatResponse" key with some words for the user in its language, it will appear in its chat UI.\n''
+      		+ ''chatResponse must be a short declarative confirmation sentence. Never ask a question and never propose follow-up choices.\n''
       		+ ''Instead of answer with the full JSON document, output a JSON Patch (RFC 6902) to apply on the user JSON. Your output must be {"ops":[{"op": ...}]}.\n''
       		+ ''Well patch arrays to not loose data and use a dash (-) to append!\n''
       		+ ''Use "path" on parents that exist or the patch will failed!'';
-      	
+      
       	const body = {
       		model: model,
       		name: ''Assistant from '' + context.project.getName() + '' ('' + context.project.getVersion() + '')'',
       		response_format: {type: ''json_object''},
       		instructions: instructions
       	};
-      		
+      
       	context.connector.postQuery = JSON.stringify(body);
       	log.info(''body: '' + context.connector.postQuery);
-      }
+      	}
       '
   ↓model [variables.RequestableHttpVariable-1732013884382]: 
     httpMethod: POST
@@ -162,8 +188,8 @@ trustAllServerCertificates: false
   handlers: 
     →: |
       '
-      // Handles the transaction start event.
-      function onTransactionStarted() {
+      	// Handles the transaction start event.
+      	function onTransactionStarted() {
       	messages = JSON.parse(messages);
       
       	messages[messages.length - 1].content += ''\n\n'' + formJSON;
@@ -174,10 +200,10 @@ trustAllServerCertificates: false
       			messages: messages
       		}
       	};
-      		
+      
       	context.connector.postQuery = JSON.stringify(body);
       	log.info(''body: '' + context.connector.postQuery);
-      }
+      	}
       '
   ↓messages [variables.RequestableHttpVariable-1732026904538]: 
     httpMethod: POST
@@ -235,44 +261,192 @@ trustAllServerCertificates: false
             - java.lang.String: 
               - ↑value: Bearer ${lib_C8Oforms_AI.GPT.apikey.secret}
   httpVerb: POST
-  responseTimeout: 240
+  responseTimeout: 600
   subDir: v1/chat/completions
   handlers: 
     →: |
       '
-      // Handles the transaction start event.
-      function onTransactionStarted() {
+      	// Handles the transaction start event.
+      	function onTransactionStarted() {
+      	const c8oForms = com.twinsoft.convertigo.engine.Engine.theApp.databaseObjectsManager.getOriginalProjectByName("C8Oforms");
+      	let allTypes = false;
+      	if (c8oForms != null) {
+      		var allTypesFile = new java.io.File(c8oForms.getDirFile(), ''DisplayObjects/mobile/assets/components/AllTypes.json'');
+      		if (allTypesFile.exists()) {
+      			allTypes = org.apache.commons.io.FileUtils.readFileToString(allTypesFile, ''UTF-8'');
+      		}
+      	}
+      
       	include(''./js/sample.js'');
+      	const instructions = ''You are a survey expert, smart and creative, in all domains. Only reply a form survey in JSON format, nothing else.\n''
+      		+ ''Allowed component/action/flow types are in this array: \n''
+      		+ allTypes + ''\n\n''
+      		+ ''Use "img" for image (alias "camera" is accepted). Use "datetime" for date/time (aliases "date" and "date_range").\n''
+      		+ ''Follow the JSON schema shown in the sample below. Output must strictly use the same keys as the sample (do NOT output a full C8Oforms document: no _id, _rev, creator, c8oAcl, wallpaper, thumbnail, config, formulaire, pageTechName, etc.).\n''
+      		+ ''Do not invent keys or properties outside the schema at any level. If unsure, omit the property.\n''
+      		+ ''Use "layout" fields to structure the UI (ex: 2 short fields on the same row). Layout schema: {type:"layout", name:"...", cols:[{size:6},{size:6},...], children:[{...field...}, ...]}.\n''
+      		+ ''Only include "actions" or "flows" if the user explicitly asks for automation or business logic. Do not include empty arrays or placeholder flows/actions.\n''
+      		+ ''Never ask questions. Always output JSON following the schema; if info is missing, make reasonable assumptions.\n''
+      		+ ''Do not ask for confirmation and do not request additional details. Execute directly in one pass.\n''
+      		+ ''If the user asks to send email/notifications and no email action exists in allowed types, use a business_logic action with a TODO comment (e.g., // TODO send email) plus a toast; do not ask for connector details.\n''
+      		+ ''This form has a native submit flow with id "submit". When the request implies submission or an email after submit, add/modify flow {id:"submit"} with elements [{type:"submit", actions:{...}}, {type:"toast", message:"..."}]. Do NOT add a button unless the user explicitly asks for one.\n''
+      		+ ''If you include a button that triggers actions, set its "flow" to match a flow "id" and put action elements in that flow "elements". Avoid if_else/for_loop unless explicitly requested; if used, provide "condition".\n''
+      		+ ''Example: button {type:"button", flow:"flow_submit"} and flows [{id:"flow_submit", elements:[{type:"submit"},{type:"toast", message:"..."}]}].\n''
+      		+ ''Actions schema: {type:"toast", message:"..."}, {type:"business_logic", expression:"// ..."}, {type:"submit"}.\n''
+      		+ ''Business logic "expression" must be a valid JS/TS expression evaluated when its sources change. Use fields.<fieldName> and actions.<actionName> (existing names) or api.* helpers directly. Do NOT wrap business_logic expressions in {{...}}. If multiple statements are needed, wrap in (async () => { ...; return <value>; })() and you may use await.\n''
+      		+ ''To trigger UI actions (toast, submit, push_page, etc.) from business_logic, create a dedicated flow and call it with await page.executeFlow({flow:"<flow_id>"}, false). Do not call actions["..."] directly.\n''
+      		+ ''For business_logic objects, set sources.self.vars.selfVar.type to "ts".\n''
+      		+ ''Business_logic code must be plain JS compatible with the runtime: do NOT use TypeScript-only syntax (no `as` assertions, no type annotations, no interfaces/enums, no access modifiers).\n''
+      		+ ''Avoid arrow functions and template literals; use function(e){...} and string concatenation.\n''
+      		+ ''When building HTML strings, prefer single quotes inside HTML attributes to avoid escaping issues.\n''
+      		+ ''In business_logic expression strings, keep text ASCII-only (no accents/emoji) to avoid malformed unicode escapes.\n''
+      		+ ''For labels/placeholders/descriptions, use plain UTF-8 text and avoid HTML entities like &eacute; or &#... .\n''
+      		+ ''Use page.local.__c8oReserved_<componentName>[id] for component state; do not use window.* globals.\n''
+      		+ ''Place all business_logic actions inside the flow with id "formulas" (as flow elements). Never put business_logic in "actions" or in any other flow.\n''
+      		+ ''Business_logic element shape is strict: keep id, name, cat, type, sources and config at the same root level. Never put id/name/config inside sources.\n''
+      		+ ''For any container with "childrenRefs" (e.g., "layout", "ion-card"), each referenced child element in "formulaire" must have "parentRef" set to that container id.\n''
+      		+ ''Web components: if you include a custom HTML tag (e.g., <vacation-calendar> or <kanban-board>) in a description html, you must also create a business_logic element in the "formulas" flow that defines the web component with customElements.define if not already defined. The component must extend HTMLElement, call attachShadow({mode:"open"}), set shadowRoot.innerHTML with styles+markup, and guard with if (!customElements.get("tag-name")) { customElements.define("tag-name", ClassName); }.\n''
+      		+ ''Web components must use a unique id attribute in the HTML tag. Store state in page.local.__c8oReserved_<componentName>[id]. If a component already exists in formulas, reuse it and only update its data by setAttribute("data", JSON.stringify(...)) or other attributes from business_logic.\n''
+      		+ ''For kanban requests, default to a minimal working board. If the user does not explicitly ask for create/edit/delete controls, do not add input/select/button flows.\n''
+      		+ ''Kanban web component rules: use class KanbanBoard extends HTMLElement only. Forbidden patterns: Reflect.construct(...), prototype reassignment, MutationObserver-based rerender loops.\n''
+      		+ ''Kanban must render even with no data: show default columns A faire, En cours, Bloque, Termine.\n''
+      		+ ''If source-grid is provided, read rows from page.local.sourceValue[gridName] and map Name/Description/Status to cards.\n''
+      		+ ''Web component JS-only example (no TS syntax): <calendar-component id="cal_1"></calendar-component> in description html, and in formulas business_logic: (async () => { var tag="calendar-component"; if (!customElements.get(tag)) { class CalendarComponent extends HTMLElement { constructor(){ super(); } connectedCallback(){ this.attachShadow({mode:"open"}); var id=this.getAttribute("id")||"default"; if (!page.local.__c8oReserved_calendarComponent) { page.local.__c8oReserved_calendarComponent = {}; } if (!page.local.__c8oReserved_calendarComponent[id]) { page.local.__c8oReserved_calendarComponent[id] = { current: new Date(), selected: null, events: [] }; } this.render(); } render(){ this.shadowRoot.innerHTML = "<style>.wrap{border:1px solid #ccc;padding:10px;border-radius:10px}</style><div class=\"wrap\">Calendar</div>"; } } customElements.define(tag, CalendarComponent); } var el=document.getElementById("cal_1"); if (el && !el.getAttribute("data")) { el.setAttribute("data", JSON.stringify({events:[]})); } return true; })()\n''
+      		+ ''When filling backend action vars, use {{fieldName}} placeholders for field values (they will be converted to C8Oforms tokens).\n''
+      		+ ''Available API helper paths (use inside {{...}}):\n''
+      		+ ''- api.user.email, api.user.name, api.user.authenticated, api.user.authenticatedUserID, api.user.groups, api.user.maxInactive, api.user.sessionId\n''
+      		+ ''- api.form.published, api.form.version\n''
+      		+ ''- api.page.form, api.page.formsSubmit\n''
+      		+ ''- api.app.currentVersion()\n''
+      		+ ''- api.translate.currentLang, api.translate.getBrowserLang()\n''
+      		+ ''- api.router.currentIndex, api.router.count\n''
+      		+ ''- api.currentFor.index, api.currentFor.element\n''
+      		+ ''Action-style helpers (use only in business_logic expressions, not in action vars): api.router.nextPage(false), api.router.previousPage(false), api.router.navigateAtIndex(0, false), api.router.submit(), api.router.reload(), api.translate.use("en"), api.c8o.callJsonObject("", {}).async(), api.c8o.log.debug(""), api.c8o.log.warn(""), api.c8o.log.error("").\n''
+      		+ ''Prefer {{api.user.email}} as recipient instead of adding an email field unless explicitly requested.\n''
+      		+ ''For flows, each item has "id" or "name" and "elements".\n''
+      		+ ''Sample schema:\n''
+      		+ JSON.stringify(sample)
+      		+ ''\nGenerate one with more pages and fields, using this input and its language, except for thumbnailFromPexelsPrompt field that has to be in english.'';
+      	if (typeof availableActions != "undefined" && availableActions && availableActions != "null") {
+      		instructions += "Available backend actions at runtime (project/sequences + variables):\n" + availableActions + "\n\n";
+      		instructions += "When email/notification is requested, choose the closest sequence from the available actions list and wire it.\n";
+      		instructions += "To call a backend sequence, add it under submit action.actions like {\"Project.Sequence\":{\"enabled\":true,\"vars\":{\"varName\":{\"str\":\"...\"}}}}.\n";
+      	}
+      	if (typeof availableSources != "undefined" && availableSources && availableSources != "null") {
+      		instructions += "Available data sources at runtime (project/sequences + variables):\n" + availableSources + "\n\n";
+      		instructions += "To bind a data source to a field (select/radio/checkbox), add field.actions like {\"dataSource.<sequenceName>\":{\"enabled\":true,\"vars\":[\"var1\",\"var2\"]}} using a formssource_ sequence.\n";
+      	}
       	const messages = [{
       		role: ''system'',
-      		content: ''Hello! I am a survey expert, smart and creative, in all domains. Only reply a form survey in JSON format, nothing else. Only use same types of fields (other types are forbidden), and structure than the following sample :\n'' +
-      			JSON.stringify(sample) + '' \nYou have now to generate one with more pages and fields, using this input and its language, except for thumbnailFromPexelsPrompt field that has to be in english.''
+      		content: instructions
       	}, {
       		role: ''user'',
       		content: prompt
       	}];
-      	
+      
       	const body = {
       		model: model,
       		response_format: {"type": "json_object"},
       		messages: messages
       	};
-      	
+      
       	context.connector.postQuery = JSON.stringify(body);
       	log.info("body: " + context.connector.postQuery);
-      }
+      	}
       
-      // Handles the XML generated event.
-      function onXmlGenerated() {
-      	const response = context.getXpathApi().selectSingleNode(dom, ''//content/text()'');
+      	// Handles the XML generated event.
+      	function onXmlGenerated() {
+      	var xpath = context.getXpathApi();
+      
+      	var pickFirstText = function(paths) {
+      		for (var i = 0; i < paths.length; i++) {
+      			try {
+      				var n = xpath.selectSingleNode(dom, paths[i]);
+      				if (n != null) {
+      					var v = n.getNodeValue();
+      					if ((v == null || v === '''') && n.getTextContent) {
+      						v = n.getTextContent();
+      					}
+      					if (v != null) {
+      						v = ('''' + v).trim();
+      						if (v.length > 0) {
+      							return v;
+      						}
+      					}
+      				}
+      			} catch (e) {}
+      		}
+      		return null;
+      	};
+      
+      	// 1) Standard chat/completions payload
+      	var response = pickFirstText([
+      		''//choices/object/message/content/text()'',
+      		''//choices/array/object/message/content/text()'',
+      		''//content/text()''
+      	]);
+      
+      	// 2) Array content format: message.content = [{type:"text", text:"..."}]
+      	if (response == null) {
+      		try {
+      			var list = xpath.selectNodeList(dom, ''//choices//message//content//text/text()'');
+      			if (list != null && list.getLength && list.getLength() > 0) {
+      				var parts = [];
+      				for (var i2 = 0; i2 < list.getLength(); i2++) {
+      					var n2 = list.item(i2);
+      					if (n2 != null) {
+      						var v2 = n2.getNodeValue();
+      						if (v2 == null && n2.getTextContent) {
+      							v2 = n2.getTextContent();
+      						}
+      						if (v2 != null) {
+      							v2 = ('''' + v2).trim();
+      							if (v2.length > 0) {
+      								parts.push(v2);
+      							}
+      						}
+      					}
+      				}
+      				if (parts.length > 0) {
+      					response = parts.join(''\n'');
+      				}
+      			}
+      		} catch (e3) {}
+      	}
+      
+      	// 3) Fallbacks for newer Responses payload shapes
+      	if (response == null) {
+      		response = pickFirstText([
+      			''//output_text/text()'',
+      			''//output//content//text/text()''
+      		]);
+      	}
+      
+      	// 4) If no content, expose provider error message when present
+      	if (response == null) {
+      		var err = pickFirstText([
+      			''//error/message/text()'',
+      			''//message/text()'',
+      			''//detail/text()''
+      		]);
+      		if (err != null) {
+      			context.addTextNodeUnderRoot(''response'', ''AI error: '' + err);
+      			return;
+      		}
+      	}
+      
       	if (response != null) {
-      		context.addTextNodeUnderRoot(''response'', response.getNodeValue());
+      		context.addTextNodeUnderRoot(''response'', response);
       	} else {
       		context.addTextNodeUnderRoot(''response'', ''content from AI not found'');
       	}
-      }
+      	}
       '
   ↓prompt [variables.RequestableHttpVariable-1686658211203]: 
+    httpMethod: POST
+  ↓availableActions [variables.RequestableHttpVariable-1890000000301]: 
+    httpMethod: POST
+  ↓availableSources [variables.RequestableHttpVariable-1890000000303]: 
     httpMethod: POST
   ↓model [variables.RequestableHttpVariable-1711132098790]: 
     httpMethod: POST
@@ -297,13 +471,13 @@ trustAllServerCertificates: false
             - java.lang.String: 
               - ↑value: Bearer ${lib_C8Oforms_AI.GPT.apikey.secret}
   httpVerb: POST
-  responseTimeout: 240
+  responseTimeout: 600
   subDir: v1/chat/completions
   handlers: 
     →: |
       '
-      // Handles the transaction start event.
-      function onTransactionStarted() {
+      	// Handles the transaction start event.
+      	function onTransactionStarted() {
       	const c8oForms = com.twinsoft.convertigo.engine.Engine.theApp.databaseObjectsManager.getOriginalProjectByName("C8Oforms");
       	let allTypes = false;
       	if (c8oForms != null) {
@@ -313,40 +487,85 @@ trustAllServerCertificates: false
       		}
       	}
       
-      	
+      
       	messages = JSON.parse(messages);
       	messages.unshift({
       		role: ''system'',
       		content: ''You are a survey expert, smart, not lazy and creative, in all domains. ''
       			+ ''Only use same types of fields (other types are forbidden) from this array: \n''
       			+ allTypes + ''\n\n''
+      			+ ''Never ask questions; if info is missing, make reasonable assumptions.\n''
+      			+ ''Do not ask for confirmation and do not request additional details. Execute directly in one pass.\n''
+      			+ ''If the user asks to send email/notifications and no email action exists in allowed types, use a business_logic action with a TODO comment plus a toast; do not ask for connector details.\n''
+      			+ ''This form has a native submit flow with id "submit". When submission or email-after-submit is requested, add/modify flow {id:"submit"} with elements [{type:"submit", actions:{...}}, {type:"toast", message:"..."}]. Do NOT add a button unless explicitly requested.\n''
+      			+ ''Example: button {type:"button", flow:"flow_submit"} and flow {id:"flow_submit", elements:[{type:"submit"},{type:"toast", message:"..."}]}.\n''
       			+ ''You have to edit the input user survey without any other modifications. Please keep all existing keys and values of the user\''s JSON.\n''
-      			+ ''You can edit, add or remove "pages", "formulaire" and "chatSummary", using the user input prompt and its language.\n''
+      			+ ''You can edit, add or remove \"pages\", \"formulaire\", \"actions\", \"flows\", \"chatSummary\" and \"chatResponse\", using the user input prompt and its language.\n''
+      			+ ''Only add or update \"actions\" or \"flows\" when explicitly requested; do not add empty placeholders. If you add a flow, ensure it is referenced by a button \"flow\" or otherwise used.\n''
+      			+ ''Avoid if_else/for_loop unless explicitly requested; if used, provide \"condition\".\n''
+      			+ ''Use \"img\" for image (alias \"camera\" is accepted). Use \"datetime\" for date/time (aliases \"date\" and \"date_range\").\n''
       			+ ''If not specified, generate almost 5-6 questions per new pages.\n''
       			+ ''For new fields and pages, generate unique "id" and use their reference logically.\n''
       			+ ''If you have to add new "description" instead of "<img>", insert in "html" the value "pexel:" + english prompt, I will replace after.\n''
       			+ ''Create or update a root "chatSummary" key that do a short condensed summary of the whole conversation with the user, like if the user ask for this survey at once.\n''
       			+ ''Create a root "chatResponse" key with some words for the user in its language, it will appear in its chat UI.\n''
+      			+ ''Never ask a question and never propose follow-up choices.\n''
       			+ ''Instead of answer with the full JSON document, output a JSON Patch (RFC 6902) to apply on the user JSON. Your output must be {"ops":[{"op": ...}]}.\n''
       			+ ''Well patch arrays to not loose data and use a dash (-) to append!\n''
       			+ ''Use "path" on parents that exist or the patch will failed!''
+      			+ ''Business logic "expression" must be a valid JS/TS expression. In patches, use C8Oforms $$ tokens (id-based) for field/action references (no {{}}). If multiple statements are needed, wrap in (async () => { ...; return <value>; })() and you may use await.\n''
+      			+ ''To trigger UI actions (toast, submit, push_page, etc.) from business_logic, create a dedicated flow and call it with await page.executeFlow({flow:"<flow_id>"}, false). Do not call actions["..."] directly.\n''
+      			+ ''For business_logic objects, set sources.self.vars.selfVar.type to "ts".\n''
+      		+ ''Business_logic code must be plain JS compatible with the runtime: do NOT use TypeScript-only syntax (no `as` assertions, no type annotations, no interfaces/enums, no access modifiers).\n''
+      		+ ''Avoid arrow functions and template literals; use function(e){...} and string concatenation.\n''
+      		+ ''When building HTML strings, prefer single quotes inside HTML attributes to avoid escaping issues.\n''
+      		+ ''In business_logic expression strings, keep text ASCII-only (no accents/emoji) to avoid malformed unicode escapes.\n''
+      		+ ''Use page.local.__c8oReserved_<componentName>[id] for component state; do not use window.* globals.\n''
+      			+ ''Place all business_logic actions inside the flow with id "formulas" (as flow elements). Never put business_logic in "actions" or in any other flow.\n''
+      			+ ''Business_logic element shape is strict: keep id, name, cat, type, sources and config at the same root level. Never put id/name/config inside sources.\n''
+      			+ ''For any container with "childrenRefs" (e.g., "layout", "ion-card"), each referenced child element in "formulaire" must have "parentRef" set to that container id.\n''
+      			+ ''Web components: if you include a custom HTML tag (e.g., <vacation-calendar> or <kanban-board>) in a description html, you must also create a business_logic element in the "formulas" flow that defines the web component with customElements.define if not already defined. The component must extend HTMLElement, call attachShadow({mode:"open"}), set shadowRoot.innerHTML with styles+markup, and guard with if (!customElements.get("tag-name")) { customElements.define("tag-name", ClassName); }.\n''
+      		+ ''Web components must use a unique id attribute in the HTML tag. Store state in page.local.__c8oReserved_<componentName>[id]. If a component already exists in formulas, reuse it and only update its data by setAttribute("data", JSON.stringify(...)) or other attributes from business_logic.\n''
+      		+ ''For kanban requests, default to a minimal working board. If the user does not explicitly ask for create/edit/delete controls, do not add input/select/button flows.\n''
+      		+ ''Kanban web component rules: use class KanbanBoard extends HTMLElement only. Forbidden patterns: Reflect.construct(...), prototype reassignment, MutationObserver-based rerender loops.\n''
+      		+ ''Kanban must render even with no data: show default columns A faire, En cours, Bloque, Termine.\n''
+      		+ ''If source-grid is provided, read rows from page.local.sourceValue[gridName] and map Name/Description/Status to cards.\n''
+      		+ ''Web component JS-only example (no TS syntax): <calendar-component id="cal_1"></calendar-component> in description html, and in formulas business_logic: (async () => { var tag="calendar-component"; if (!customElements.get(tag)) { class CalendarComponent extends HTMLElement { constructor(){ super(); } connectedCallback(){ this.attachShadow({mode:"open"}); var id=this.getAttribute("id")||"default"; if (!page.local.__c8oReserved_calendarComponent) { page.local.__c8oReserved_calendarComponent = {}; } if (!page.local.__c8oReserved_calendarComponent[id]) { page.local.__c8oReserved_calendarComponent[id] = { current: new Date(), selected: null, events: [] }; } this.render(); } render(){ this.shadowRoot.innerHTML = "<style>.wrap{border:1px solid #ccc;padding:10px;border-radius:10px}</style><div class=\"wrap\">Calendar</div>"; } } customElements.define(tag, CalendarComponent); } var el=document.getElementById("cal_1"); if (el && !el.getAttribute("data")) { el.setAttribute("data", JSON.stringify({events:[]})); } return true; })()\n''
+      			+ ''When filling backend action vars, use C8Oforms $$ tokens with existing field ids from the current form (no {{}} placeholders).\n''
+      			+ ''Format: $$START<id>{"c8otype":"path","c8opath":"","c8oPrettyPath":null,"c8obuiltin":null,"fakeId":"uniqueId","c8oName":null}END<id>$$.\n''
+      			+ ''For user helpers use id 1 and c8opath like "api.user.email" (e.g. $$START1{"c8otype":"path","c8opath":"api.user.email","c8oPrettyPath":null,"c8obuiltin":null,"fakeId":"uniqueId","c8oName":"email"}END1$$).\n''
+      			+ ''Available API helper paths for c8opath: api.user.email, api.user.name, api.user.authenticated, api.user.authenticatedUserID, api.user.groups, api.user.maxInactive, api.user.sessionId, api.form.published, api.form.version, api.page.form, api.page.formsSubmit, api.app.currentVersion(), api.translate.currentLang, api.translate.getBrowserLang(), api.router.currentIndex, api.router.count, api.currentFor.index, api.currentFor.element.\n''
+      			+ ''Action-style helpers (use only in business_logic expressions, not in action vars): api.router.nextPage(false), api.router.previousPage(false), api.router.navigateAtIndex(0, false), api.router.submit(), api.router.reload(), api.translate.use("en"), api.c8o.callJsonObject("", {}).async(), api.c8o.log.debug(""), api.c8o.log.warn(""), api.c8o.log.error("").\n''
       	});
-      	
+      	if (typeof availableActions != "undefined" && availableActions && availableActions != "null") {
+      		messages[0].content += "Available backend actions at runtime (project/sequences + variables):\n" + availableActions + "\n\n";
+      		messages[0].content += "When email/notification is requested, choose the closest sequence from the available actions list and wire it.\n";
+      		messages[0].content += "To call a backend sequence, add it under submit action.actions like {\"Project.Sequence\":{\"enabled\":true,\"vars\":{\"varName\":{\"str\":\"...\"}}}}.\n";
+      	}
+      	if (typeof availableSources != "undefined" && availableSources && availableSources != "null") {
+      		messages[0].content += "Available data sources at runtime (project/sequences + variables):\n" + availableSources + "\n\n";
+      		messages[0].content += "To bind a data source to a field (select/radio/checkbox), add field.actions like {\"dataSource.<sequenceName>\":{\"enabled\":true,\"vars\":[\"var1\",\"var2\"]}} using a formssource_ sequence.\n";
+      	}
+      
       	messages[messages.length - 1].content += ''\n\n'' + formJSON;
-      	
+      
       	const body = {
       		model: model,
       		response_format: {type: ''json_object''},
       		messages: messages
       	};
-      		
+      
       	context.connector.postQuery = JSON.stringify(body);
       	log.info(''body: '' + context.connector.postQuery);
-      }
+      	}
       '
   ↓messages [variables.RequestableHttpVariable-1730221703841]: 
     httpMethod: POST
   ↓model [variables.RequestableHttpVariable-1730221703847]: 
     httpMethod: POST
   ↓formJSON [variables.RequestableHttpVariable-1730221775325]: 
+    httpMethod: POST
+  ↓availableActions [variables.RequestableHttpVariable-1890000000302]: 
+    httpMethod: POST
+  ↓availableSources [variables.RequestableHttpVariable-1890000000304]: 
     httpMethod: POST

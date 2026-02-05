@@ -1,0 +1,286 @@
+authenticatedContextRequired: true
+responseTimeout: 700
+↓Init [steps.SimpleStep-1892000000001]: 
+  expression: |
+    'var formIdValue = form_id == null ? "" : ("" + form_id);
+    var messageValue = message == null ? "" : ("" + message);
+    var resetValue = reset == null ? "false" : ("" + reset);
+    var languageValue = language == null || ("" + language).length == 0 ? "en" : ("" + language);
+    var authenticatedUserValue = context.getAuthenticatedUser();
+    if (authenticatedUserValue == null) {
+    	authenticatedUserValue = "";
+    } else {
+    	authenticatedUserValue = "" + authenticatedUserValue;
+    }
+    include("./js/common.js");
+    var httpSessionAttributes = getCurrentHttpSessionAttributes();
+    var now = java.lang.System.currentTimeMillis();
+    var jobId = "ai_chat_job_" + now + "_" + Math.floor(Math.random() * 1000000);
+    var modelValue = "${lib_C8Oforms_AI.GPT.model=gpt-4o}";
+    var apiKeyValue = "${lib_C8Oforms_AI.GPT.apikey.secret}";
+    
+    var session = context.httpSession;
+    var jobs = null;
+    if (session != null) {
+    	jobs = session.getAttribute("libC8oformsAiChatJobs");
+    	if (jobs == null) {
+    		jobs = new java.util.concurrent.ConcurrentHashMap();
+    		session.setAttribute("libC8oformsAiChatJobs", jobs);
+    	}
+    } else {
+    	jobs = new java.util.concurrent.ConcurrentHashMap();
+    }
+    
+    var job = new java.util.concurrent.ConcurrentHashMap();
+    job.put("status", "queued");
+    job.put("progress", "queued");
+    job.put("streamText", "");
+    job.put("streamSeq", "0");
+    job.put("streamDone", "false");
+    job.put("createdAt", "" + now);
+    job.put("updatedAt", "" + now);
+    jobs.put(jobId, job);
+    
+    var worker = new java.lang.Thread(new java.lang.Runnable({
+    	run: function() {
+    		var pulseFlag = null;
+    		var pulseThread = null;
+    		var previewFlag = null;
+    		var previewThread = null;
+    		try {
+    			job.put("status", "running");
+    			job.put("progress", "preparing_request");
+    			job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+    			
+    			var startedAt = java.lang.System.currentTimeMillis();
+    			var AtomicBoolean = java.util.concurrent.atomic.AtomicBoolean;
+    			pulseFlag = new AtomicBoolean(true);
+    			pulseThread = new java.lang.Thread(new java.lang.Runnable({
+    				run: function() {
+    					while (pulseFlag.get()) {
+    						try {
+    							var elapsed = parseInt((java.lang.System.currentTimeMillis() - startedAt) / 1000, 10);
+    							if ("" + job.get("status") == "running") {
+    								job.put("progress", "waiting_llm_" + elapsed + "s");
+    								job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+    							}
+    							java.lang.Thread.sleep(1000);
+    						} catch (ePulse) {
+    						}
+    					}
+    				}
+    			}));
+    			pulseThread.setName("lib_C8Oforms_AI_ChatStart_pulse_" + jobId);
+    			pulseThread.start();
+    			
+    			if (messageValue.length > 0 && apiKeyValue != null && ("" + apiKeyValue).trim().length > 0) {
+    				previewFlag = new AtomicBoolean(true);
+    				previewThread = new java.lang.Thread(new java.lang.Runnable({
+    					run: function() {
+    						try {
+    							var previewMessages = [{
+    								role: "system",
+    								content: "You are an assistant for C8Oforms. Reply in the same language as the user. Stream brief generation progress only. Do not output final form content. Do not ask clarification questions. Do not ask for confirmation. Do not propose follow-up options. Never use question marks. Assume sensible defaults and generate directly."
+    							}, {
+    								role: "user",
+    								content: messageValue
+    							}];
+    							job.put("progress", "streaming_model");
+    							streamChatCompletions(apiKeyValue, modelValue, previewMessages, {
+    								stopFlag: previewFlag,
+    								temperature: 0.2,
+    								onChunk: function(fullText, token) {
+    									job.put("streamText", "" + fullText);
+    									var seq = 0;
+    									try {
+    										seq = parseInt("" + (job.get("streamSeq") == null ? "0" : job.get("streamSeq")), 10);
+    									} catch (eSeq) {
+    										seq = 0;
+    									}
+    									if (isNaN(seq)) {
+    										seq = 0;
+    									}
+    									job.put("streamSeq", "" + (seq + 1));
+    									job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+    								}
+    							});
+    						} catch (ePreview) {
+    							try {
+    								if (("" + (job.get("streamText") == null ? "" : job.get("streamText"))).length == 0) {
+    									job.put("streamText", "[stream_unavailable] preview stream unavailable, generation continues");
+    								}
+    							} catch (ePreviewMsg) {
+    							}
+    						} finally {
+    							job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+    						}
+    					}
+    				}));
+    				previewThread.setName("lib_C8Oforms_AI_ChatStart_stream_" + jobId);
+    				previewThread.start();
+    			}
+    			
+    			job.put("progress", "calling_chat_sequence");
+    			job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+    			var internal = callSequenceInDuplicateSession("lib_C8Oforms_AI", "Chat", {
+    				form_id: formIdValue,
+    				message: messageValue,
+    				reset: resetValue,
+    				language: languageValue,
+    				authenticatedUser: authenticatedUserValue
+    			}, httpSessionAttributes);
+    			
+    			if (pulseFlag != null) {
+    				pulseFlag.set(false);
+    			}
+    			if (previewFlag != null) {
+    				previewFlag.set(false);
+    			}
+    			if (pulseThread != null) {
+    				try {
+    					pulseThread.join(1200);
+    				} catch (eJoin) {
+    				}
+    			}
+    			if (previewThread != null) {
+    				try {
+    					previewThread.join(1200);
+    				} catch (eJoin2) {
+    				}
+    			}
+    			
+    			job.put("progress", "parsing_response");
+    			job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+    			var payload = internal;
+    			if (payload != null && payload.document != null && payload.form == null && payload.document.form != null) {
+    				payload = payload.document;
+    			} else if (payload != null && payload.doc != null && payload.form == null && payload.doc.form != null) {
+    				payload = payload.doc;
+    			}
+    			var payloadError = null;
+    			if (payload != null && payload.error != null) {
+    				payloadError = payload.error;
+    			} else if (payload != null && payload.document != null && payload.document.error != null) {
+    				payloadError = payload.document.error;
+    			} else if (payload != null && payload.doc != null && payload.doc.error != null) {
+    				payloadError = payload.doc.error;
+    			}
+    			
+    			job.put("progress", "finalizing_response");
+    			if (payloadError != null) {
+    				job.put("status", "error");
+    				job.put("progress", "error");
+    				try {
+    					if (typeof payloadError == "string") {
+    						job.put("error", payloadError);
+    						if (("" + job.get("streamText")).length == 0) {
+    							job.put("streamText", payloadError);
+    						}
+    					} else if (payloadError.message != null) {
+    						job.put("error", "" + payloadError.message);
+    						if (("" + job.get("streamText")).length == 0) {
+    							job.put("streamText", "" + payloadError.message);
+    						}
+    					} else {
+    						job.put("error", JSON.stringify(payloadError));
+    					}
+    				} catch (e2) {
+    					job.put("error", "" + payloadError);
+    				}
+    			} else {
+    				job.put("status", "done");
+    				job.put("progress", "done");
+    				job.put("result", JSON.stringify(payload));
+    				
+    				try {
+    					if (("" + (job.get("streamText") == null ? "" : job.get("streamText"))).length == 0
+    						&& payload != null && payload.form != null && payload.form.messages != null
+    						&& payload.form.messages.length > 0) {
+    						var arr = payload.form.messages;
+    						for (var mi = arr.length - 1; mi >= 0; mi--) {
+    							var msgObj = arr[mi];
+    							if (msgObj != null && msgObj.role == "assistant" && msgObj.content != null) {
+    								job.put("streamText", "" + msgObj.content);
+    								break;
+    							}
+    						}
+    					}
+    				} catch (eFinal) {
+    				}
+    			}
+    			job.put("streamDone", "true");
+    			job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+    		} catch (e) {
+    			job.put("status", "error");
+    			job.put("progress", "error");
+    			var errTxt = "";
+    			try {
+    				if (e != null && e.message != null) {
+    					errTxt = "" + e.message;
+    				} else {
+    					errTxt = "" + e;
+    				}
+    			} catch (e1) {
+    				errTxt = "" + e;
+    			}
+    			try {
+    				if (e != null && e.javaException != null) {
+    					var cause = e.javaException.getMessage();
+    					if (cause != null && ("" + cause).length > 0) {
+    						errTxt += " | cause: " + cause;
+    					}
+    				}
+    			} catch (e2) {
+    			}
+    			try {
+    				if (e != null && e.stack != null) {
+    					errTxt += " | stack: " + e.stack;
+    				}
+    			} catch (e3) {
+    			}
+    			job.put("error", errTxt);
+    			if (("" + (job.get("streamText") == null ? "" : job.get("streamText"))).length == 0) {
+    				job.put("streamText", errTxt);
+    			}
+    			job.put("streamDone", "true");
+    			job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+    		} finally {
+    			if (pulseFlag != null) {
+    				pulseFlag.set(false);
+    			}
+    			if (previewFlag != null) {
+    				previewFlag.set(false);
+    			}
+    		}
+    	}
+    }));
+    worker.setName("lib_C8Oforms_AI_ChatStart_" + jobId);
+    worker.start();
+    
+    response = {
+    	jobId: jobId,
+    	status: "queued",
+    	progress: "queued",
+    	stream: "",
+    	streamSeq: "0",
+    	streamDone: "false"
+    };'
+↓response [steps.JsonToXmlStep-1892000000002]: 
+  jsonObject: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: JS
+        - →→: response
+  key: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: PLAIN
+        - →→: response
+↓form_id [variables.RequestableVariable-1892000000003]: 
+↓message [variables.RequestableVariable-1892000000004]: 
+↓reset [variables.RequestableVariable-1892000000005]: 
+  value: false
+↓language [variables.RequestableVariable-1892000000006]: 
+  value: en

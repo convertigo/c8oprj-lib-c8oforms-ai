@@ -1,0 +1,333 @@
+authenticatedContextRequired: true
+responseTimeout: 700
+↓Init [steps.SimpleStep-1891000000001]: 
+  expression: |
+    'var promptValue = prompt == null ? "" : ("" + prompt);
+    var modeValue = mode == null || ("" + mode).length == 0 ? "chat" : ("" + mode);
+    var now = java.lang.System.currentTimeMillis();
+    var jobId = "ai_job_" + now + "_" + Math.floor(Math.random() * 1000000);
+    var modelValue = "${lib_C8Oforms_AI.GPT.model=gpt-4o}";
+    var apiKeyValue = "${lib_C8Oforms_AI.GPT.apikey.secret}";
+    include("./js/common.js");
+    var httpSessionAttributes = getCurrentHttpSessionAttributes();
+    
+    var session = context.httpSession;
+    var jobs = null;
+    if (session != null) {
+        jobs = session.getAttribute("libC8oformsAiJobs");
+        if (jobs == null) {
+            jobs = new java.util.concurrent.ConcurrentHashMap();
+            session.setAttribute("libC8oformsAiJobs", jobs);
+        }
+    } else {
+        jobs = new java.util.concurrent.ConcurrentHashMap();
+    }
+    
+    var job = new java.util.concurrent.ConcurrentHashMap();
+    job.put("status", "queued");
+    job.put("progress", "queued");
+    job.put("streamText", "");
+    job.put("streamSeq", "0");
+    job.put("streamDone", "false");
+    job.put("createdAt", "" + now);
+    job.put("updatedAt", "" + now);
+    jobs.put(jobId, job);
+    
+    var worker = new java.lang.Thread(new java.lang.Runnable({
+        run: function() {
+            var pulseFlag = null;
+            var pulseThread = null;
+            var previewFlag = null;
+            var previewThread = null;
+            try {
+                job.put("status", "running");
+                job.put("progress", "preparing_request");
+                job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+                
+                var startedAt = java.lang.System.currentTimeMillis();
+                var AtomicBoolean = java.util.concurrent.atomic.AtomicBoolean;
+                pulseFlag = new AtomicBoolean(true);
+                pulseThread = new java.lang.Thread(new java.lang.Runnable({
+                    run: function() {
+                        while (pulseFlag.get()) {
+                            try {
+                                var elapsed = parseInt((java.lang.System.currentTimeMillis() - startedAt) / 1000, 10);
+                                if ("" + job.get("status") == "running") {
+                                    job.put("progress", "waiting_llm_" + elapsed + "s");
+                                    job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+                                }
+                                java.lang.Thread.sleep(1000);
+                            } catch (ePulse) {
+                            }
+                        }
+                    }
+                }));
+                pulseThread.setName("lib_C8Oforms_AI_GenerateJsonFormStart_pulse_" + jobId);
+                pulseThread.start();
+                
+                if (promptValue.length > 0 && apiKeyValue != null && ("" + apiKeyValue).trim().length > 0) {
+                    previewFlag = new AtomicBoolean(true);
+                    previewThread = new java.lang.Thread(new java.lang.Runnable({
+                            run: function() {
+                                try {
+                                var previewMessages = [{
+                                    role: "system",
+                                    content: "You are an assistant for C8Oforms. Generate the actual final form JSON now. Output only valid JSON (single object), no markdown, no code fences, no explanations. Reply in the same language as the user. Never ask questions, never ask for confirmation, never propose follow-up options. If info is missing, assume sensible defaults and generate directly."
+                                }, {
+                                    role: "user",
+                                    content: promptValue
+                                }];
+                                job.put("progress", "streaming_model");
+                                    streamChatCompletions(apiKeyValue, modelValue, previewMessages, {
+                                        stopFlag: previewFlag,
+                                        temperature: 0.2,
+                                        responseFormat: { type: "json_object" },
+                                    onChunk: function(fullText, token) {
+                                        job.put("streamText", "Generation en cours...\n\n" + fullText);
+                                        var seq = 0;
+                                        try {
+                                            seq = parseInt("" + (job.get("streamSeq") == null ? "0" : job.get("streamSeq")), 10);
+                                        } catch (eSeq) {
+                                            seq = 0;
+                                        }
+                                        if (isNaN(seq)) {
+                                            seq = 0;
+                                        }
+                                        job.put("streamSeq", "" + (seq + 1));
+                                            job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+                                        }
+                                    });
+                                } catch (ePreview) {
+                                    try {
+                                        if (("" + (job.get("streamText") == null ? "" : job.get("streamText"))).length == 0) {
+                                            job.put("streamText", "[stream_unavailable] preview stream unavailable, generation continues");
+                                        }
+                                    } catch (ePreviewMsg) {
+                                    }
+                                } finally {
+                                    job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+                                }
+                            }
+                        }));
+                    previewThread.setName("lib_C8Oforms_AI_GenerateJsonFormStart_stream_" + jobId);
+                    previewThread.start();
+                    } else {
+                        if (promptValue.length == 0) {
+                            job.put("streamText", "[stream_disabled] empty_prompt");
+                        } else if (apiKeyValue == null || ("" + apiKeyValue).trim().length == 0) {
+                            job.put("streamText", "[stream_disabled] missing_api_key");
+                        }
+                    }
+                
+                job.put("progress", "calling_generate_sequence");
+                job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+                var internal = callSequenceInDuplicateSession("lib_C8Oforms_AI", "GenerateJsonForm", {
+                    prompt: promptValue,
+                    mode: modeValue
+                }, httpSessionAttributes);
+                
+                var mapInternalPayload = function(obj) {
+                    var mapped = null;
+                    if (obj != null && obj.response != null) {
+                        mapped = obj.response;
+                    } else if (obj != null && obj.document != null && obj.document.response != null) {
+                        mapped = obj.document.response;
+                    } else if (obj != null && obj.doc != null && obj.doc.response != null) {
+                        mapped = obj.doc.response;
+                    } else {
+                        mapped = obj;
+                    }
+                    return mapped;
+                };
+                var extractPayloadError = function(payloadObj) {
+                    if (payloadObj != null && payloadObj.error != null) {
+                        return payloadObj.error;
+                    }
+                    if (payloadObj != null && payloadObj.document != null && payloadObj.document.error != null) {
+                        return payloadObj.document.error;
+                    }
+                    if (payloadObj != null && payloadObj.doc != null && payloadObj.doc.error != null) {
+                        return payloadObj.doc.error;
+                    }
+                    return null;
+                };
+                var payloadErrorText = function(errObj) {
+                    if (errObj == null) {
+                        return "";
+                    }
+                    try {
+                        if (typeof errObj == "string") {
+                            return errObj;
+                        }
+                        if (errObj.message != null) {
+                            return "" + errObj.message;
+                        }
+                        return JSON.stringify(errObj);
+                    } catch (eTxt) {
+                        return "" + errObj;
+                    }
+                };
+                var isRetryableContentError = function(errObj) {
+                    var t = payloadErrorText(errObj).toLowerCase();
+                    if (t.indexOf("content from ai not found") >= 0) {
+                        return true;
+                    }
+                    if (t.indexOf("ai error:") == 0) {
+                        return true;
+                    }
+                    return false;
+                };
+                
+                if (pulseFlag != null) {
+                    pulseFlag.set(false);
+                }
+                if (previewFlag != null) {
+                    previewFlag.set(false);
+                }
+                if (pulseThread != null) {
+                    try {
+                        pulseThread.join(1200);
+                    } catch (eJoin) {
+                    }
+                }
+                if (previewThread != null) {
+                    try {
+                        previewThread.join(1200);
+                    } catch (eJoin2) {
+                    }
+                }
+                
+                job.put("progress", "parsing_response");
+                job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+                var payload = mapInternalPayload(internal);
+                var payloadError = extractPayloadError(payload);
+                
+                if (payloadError != null && isRetryableContentError(payloadError)) {
+                    job.put("progress", "retry_generate_sequence");
+                    job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+                    try {
+                        var internalRetry = callSequenceInDuplicateSession("lib_C8Oforms_AI", "GenerateJsonForm", {
+                            prompt: promptValue,
+                            mode: modeValue
+                        }, httpSessionAttributes);
+                        var payloadRetry = mapInternalPayload(internalRetry);
+                        var payloadRetryError = extractPayloadError(payloadRetry);
+                        if (payloadRetryError == null) {
+                            payload = payloadRetry;
+                            payloadError = null;
+                        } else {
+                            payload = payloadRetry;
+                            payloadError = payloadRetryError;
+                        }
+                    } catch (eRetry) {
+                        // keep original payloadError
+                    }
+                }
+                
+                job.put("progress", "finalizing_response");
+                if (payloadError != null) {
+                    job.put("status", "error");
+                    job.put("progress", "error");
+                    try {
+                        if (typeof payloadError == "string") {
+                            job.put("error", payloadError);
+                            if (("" + job.get("streamText")).length == 0) {
+                                job.put("streamText", payloadError);
+                            }
+                        } else if (payloadError.message != null) {
+                            job.put("error", "" + payloadError.message);
+                            if (("" + job.get("streamText")).length == 0) {
+                                job.put("streamText", "" + payloadError.message);
+                            }
+                        } else {
+                            job.put("error", JSON.stringify(payloadError));
+                        }
+                    } catch (e2) {
+                        job.put("error", "" + payloadError);
+                    }
+                } else {
+                    job.put("status", "done");
+                    job.put("progress", "done");
+                    job.put("result", JSON.stringify(payload));
+                    
+                    try {
+                        if (("" + (job.get("streamText") == null ? "" : job.get("streamText"))).length == 0
+                            && payload != null && payload.chatResponse != null) {
+                            job.put("streamText", "" + payload.chatResponse);
+                        }
+                    } catch (eFinal) {
+                    }
+                }
+                job.put("streamDone", "true");
+                job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+            } catch (e) {
+                job.put("status", "error");
+                job.put("progress", "error");
+                var errTxt = "";
+                try {
+                    if (e != null && e.message != null) {
+                        errTxt = "" + e.message;
+                    } else {
+                        errTxt = "" + e;
+                    }
+                } catch (e1) {
+                    errTxt = "" + e;
+                }
+                try {
+                    if (e != null && e.javaException != null) {
+                        var cause = e.javaException.getMessage();
+                        if (cause != null && ("" + cause).length > 0) {
+                            errTxt += " | cause: " + cause;
+                        }
+                    }
+                } catch (e2) {
+                }
+                try {
+                    if (e != null && e.stack != null) {
+                        errTxt += " | stack: " + e.stack;
+                    }
+                } catch (e3) {
+                }
+                job.put("error", errTxt);
+                if (("" + (job.get("streamText") == null ? "" : job.get("streamText"))).length == 0) {
+                    job.put("streamText", errTxt);
+                }
+                job.put("streamDone", "true");
+                job.put("updatedAt", "" + java.lang.System.currentTimeMillis());
+            } finally {
+                if (pulseFlag != null) {
+                    pulseFlag.set(false);
+                }
+                if (previewFlag != null) {
+                    previewFlag.set(false);
+                }
+            }
+        }
+    }));
+    worker.setName("lib_C8Oforms_AI_GenerateJsonFormStart_" + jobId);
+    worker.start();
+    
+    response = {
+        jobId: jobId,
+        status: "queued",
+        progress: "queued",
+        stream: "",
+        streamSeq: "0",
+        streamDone: "false"
+    };'
+↓response [steps.JsonToXmlStep-1891000000002]: 
+  jsonObject: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: JS
+        - →→: response
+  key: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: PLAIN
+        - →→: response
+↓prompt [variables.RequestableVariable-1891000000003]: 
+↓mode [variables.RequestableVariable-1891000000004]: 
+  value: chat

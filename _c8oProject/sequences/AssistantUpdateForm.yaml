@@ -107,6 +107,400 @@ responseTimeout: 300
     }
     
     form = jsonpatch.apply_patch(JSON.parse(formJSON), patch);
+    function repairBrokenUnicode(value) {
+    	if (value == null) {
+    		return value;
+    	}
+    	if (typeof value == "string") {
+    		return value.replace(/\u0000([0-9a-fA-F]{2})/g, function(match, hex) {
+    			try {
+    				return String.fromCharCode(parseInt(hex, 16));
+    			} catch (e) {
+    				return match;
+    			}
+    		});
+    	}
+    	if (Array.isArray(value)) {
+    		for (var ri = 0; ri < value.length; ri++) {
+    			value[ri] = repairBrokenUnicode(value[ri]);
+    		}
+    		return value;
+    	}
+    	if (typeof value == "object") {
+    		for (var rk in value) {
+    			if (Object.prototype.hasOwnProperty.call(value, rk)) {
+    				value[rk] = repairBrokenUnicode(value[rk]);
+    			}
+    		}
+    		return value;
+    	}
+    	return value;
+    }
+    function normalizeBusinessLogic(elem, idxHint) {
+    	if (!elem || typeof elem != "object") {
+    		return;
+    	}
+    	if ((elem.type == null || elem.type === "")
+    		&& elem.sources && typeof elem.sources == "object" && !Array.isArray(elem.sources)) {
+    		if (elem.sources.type != null) {
+    			elem.type = "" + elem.sources.type;
+    			try { delete elem.sources.type; } catch (e) {}
+    		} else if (elem.sources.self && typeof elem.sources.self == "object" && !Array.isArray(elem.sources.self)
+    			&& elem.sources.self.type != null) {
+    			elem.type = "" + elem.sources.self.type;
+    			try { delete elem.sources.self.type; } catch (e00) {}
+    		}
+    	}
+    	if (elem.type != "business_logic") {
+    		return;
+    	}
+    	if (elem.sources && typeof elem.sources == "object" && !Array.isArray(elem.sources)) {
+    		var sourceMetaCandidates = [elem.sources];
+    		if (elem.sources.self && typeof elem.sources.self == "object" && !Array.isArray(elem.sources.self)) {
+    			sourceMetaCandidates.push(elem.sources.self);
+    		}
+    		for (var smi = 0; smi < sourceMetaCandidates.length; smi++) {
+    			var sourceMeta = sourceMetaCandidates[smi];
+    			if (elem.id == null && sourceMeta.id != null) {
+    				elem.id = sourceMeta.id;
+    				try { delete sourceMeta.id; } catch (e) {}
+    			}
+    			if ((elem.name == null || elem.name === "") && sourceMeta.name != null) {
+    				elem.name = "" + sourceMeta.name;
+    				try { delete sourceMeta.name; } catch (e) {}
+    			}
+    			if ((elem.cat == null || elem.cat === "") && sourceMeta.cat != null) {
+    				elem.cat = "" + sourceMeta.cat;
+    				try { delete sourceMeta.cat; } catch (e) {}
+    			}
+    			if ((elem.type == null || elem.type === "") && sourceMeta.type != null) {
+    				elem.type = "" + sourceMeta.type;
+    				try { delete sourceMeta.type; } catch (e) {}
+    			}
+    			if ((!elem.config || typeof elem.config != "object" || Array.isArray(elem.config))
+    				&& sourceMeta.config && typeof sourceMeta.config == "object" && !Array.isArray(sourceMeta.config)) {
+    				elem.config = sourceMeta.config;
+    				try { delete sourceMeta.config; } catch (e) {}
+    			}
+    		}
+    	}
+    	if ((elem.id == null || elem.id === "") && elem.config && typeof elem.config == "object" && elem.config.id != null) {
+    		elem.id = elem.config.id;
+    		try { delete elem.config.id; } catch (e6) {}
+    	}
+    	if ((elem.name == null || elem.name === "") && elem.config && typeof elem.config == "object" && elem.config.name != null) {
+    		elem.name = "" + elem.config.name;
+    		try { delete elem.config.name; } catch (e7) {}
+    	}
+    	if (!elem.cat) {
+    		elem.cat = "action";
+    	}
+    	if (!elem.sources || typeof elem.sources != "object" || Array.isArray(elem.sources)) {
+    		elem.sources = {};
+    	}
+    	if (!elem.sources.self || typeof elem.sources.self != "object" || Array.isArray(elem.sources.self)) {
+    		elem.sources.self = { enabled: true, vars: {} };
+    	}
+    	if (!elem.sources.self.vars || typeof elem.sources.self.vars != "object" || Array.isArray(elem.sources.self.vars)) {
+    		elem.sources.self.vars = {};
+    	}
+    	if (!elem.sources.self.vars.selfVar || typeof elem.sources.self.vars.selfVar != "object" || Array.isArray(elem.sources.self.vars.selfVar)) {
+    		elem.sources.self.vars.selfVar = { str: "", type: "ts" };
+    	}
+    	if (typeof elem.expression == "string" && (elem.sources.self.vars.selfVar.str == null || elem.sources.self.vars.selfVar.str === "")) {
+    		elem.sources.self.vars.selfVar.str = elem.expression;
+    	}
+    	if (elem.sources.self.vars.selfVar.str == null) {
+    		elem.sources.self.vars.selfVar.str = "";
+    	}
+    	elem.sources.self.vars.selfVar.type = "ts";
+    	if (!elem.config || typeof elem.config != "object" || Array.isArray(elem.config)) {
+    		elem.config = {};
+    	}
+    	elem.config.page = "formulas";
+    	if (elem.id == null || elem.id === "") {
+    		var idxValue = (typeof idxHint == "number" && idxHint >= 0) ? idxHint : 0;
+    		elem.id = (new Date().getTime()) + idxValue;
+    	}
+    	if (elem.name == null || elem.name === "") {
+    		elem.name = "businessLogic" + elem.id;
+    	}
+    	if ("expression" in elem) {
+    		try { delete elem.expression; } catch (e) {}
+    	}
+    }
+    function cleanupOrphanFormulaConfig(flowObj) {
+    	if (!flowObj || !Array.isArray(flowObj.elements)) {
+    		return;
+    	}
+    	var cleaned = [];
+    	for (var ce = 0; ce < flowObj.elements.length; ce++) {
+    		var current = flowObj.elements[ce];
+    		if (current == null || typeof current != "object") {
+    			continue;
+    		}
+    		var currentKeys = Object.keys(current);
+    		var keysAreMetaOnly = true;
+    		for (var cki = 0; cki < currentKeys.length; cki++) {
+    			var ck = currentKeys[cki];
+    			if (ck != "config" && ck != "id" && ck != "name" && ck != "sources") {
+    				keysAreMetaOnly = false;
+    				break;
+    			}
+    		}
+    		var isMetaOnly = !current.type && !current.cat && keysAreMetaOnly;
+    		if (isMetaOnly) {
+    			if (cleaned.length > 0) {
+    				var prev = cleaned[cleaned.length - 1];
+    				if (prev && prev.type == "business_logic") {
+    					if (!prev.config || typeof prev.config != "object") {
+    						prev.config = {};
+    					}
+    					if (current.config && typeof current.config == "object" && !Array.isArray(current.config)) {
+    						for (var mk in current.config) {
+    							if (Object.prototype.hasOwnProperty.call(current.config, mk) && prev.config[mk] == null) {
+    								prev.config[mk] = current.config[mk];
+    							}
+    						}
+    					}
+    					if (prev.id == null && current.id != null) {
+    						prev.id = current.id;
+    					}
+    					if ((prev.name == null || prev.name === "") && current.name != null) {
+    						prev.name = "" + current.name;
+    					}
+    					if ((!prev.sources || typeof prev.sources != "object" || Array.isArray(prev.sources))
+    						&& current.sources && typeof current.sources == "object" && !Array.isArray(current.sources)) {
+    						prev.sources = current.sources;
+    					}
+    					normalizeBusinessLogic(prev, ce);
+    					continue;
+    				}
+    			}
+    			continue;
+    		}
+    		cleaned.push(current);
+    	}
+    	flowObj.elements = cleaned;
+    }
+    function getBusinessLogicCode(elem) {
+    	try {
+    		if (elem && elem.sources && elem.sources.self && elem.sources.self.vars
+    			&& elem.sources.self.vars.selfVar && typeof elem.sources.self.vars.selfVar.str == "string") {
+    			return elem.sources.self.vars.selfVar.str;
+    		}
+    	} catch (e) {}
+    	return "";
+    }
+    function setBusinessLogicCode(elem, code) {
+    	if (!elem.sources || typeof elem.sources != "object" || Array.isArray(elem.sources)) {
+    		elem.sources = {};
+    	}
+    	if (!elem.sources.self || typeof elem.sources.self != "object" || Array.isArray(elem.sources.self)) {
+    		elem.sources.self = { enabled: true, vars: {} };
+    	}
+    	if (!elem.sources.self.vars || typeof elem.sources.self.vars != "object" || Array.isArray(elem.sources.self.vars)) {
+    		elem.sources.self.vars = {};
+    	}
+    	if (!elem.sources.self.vars.selfVar || typeof elem.sources.self.vars.selfVar != "object" || Array.isArray(elem.sources.self.vars.selfVar)) {
+    		elem.sources.self.vars.selfVar = { str: "", type: "ts" };
+    	}
+    	elem.sources.self.vars.selfVar.str = code;
+    	elem.sources.self.vars.selfVar.type = "ts";
+    }
+    function buildKanbanFallbackCode(idsList) {
+    	var idsJson = "[]";
+    	try { idsJson = JSON.stringify(idsList || []); } catch (e) {}
+    	var lines = [];
+    	lines.push("(async function(){");
+    	lines.push("  var tag = ''kanban-board'';");
+    	lines.push("  if (!page.local.__c8oReserved_kanbanBoard) { page.local.__c8oReserved_kanbanBoard = {}; }");
+    	lines.push("  if (!customElements.get(tag)) {");
+    	lines.push("    class KanbanBoard extends HTMLElement {");
+    	lines.push("      static get observedAttributes(){ return [''data'']; }");
+    	lines.push("      connectedCallback(){ if (!this.shadowRoot) { this.attachShadow({mode:''open''}); } this.render(); }");
+    	lines.push("      attributeChangedCallback(name, oldValue, newValue){ if (oldValue !== newValue) { this.render(); } }");
+    	lines.push("      getBoardId(){ return this.getAttribute(''id'') || ''default''; }");
+    	lines.push("      getData(){");
+    	lines.push("        var id = this.getBoardId();");
+    	lines.push("        var data = null;");
+    	lines.push("        try { data = JSON.parse(this.getAttribute(''data'') || ''); } catch (e) { data = null; }");
+    	lines.push("        if (!data || !Array.isArray(data.columns)) { data = page.local.__c8oReserved_kanbanBoard[id]; }");
+    	lines.push("        if (!data || !Array.isArray(data.columns)) {");
+    	lines.push("          data = { columns: [{ key:''A faire'', title:''A faire'', items:[] }, { key:''En cours'', title:''En cours'', items:[] }, { key:''Bloque'', title:''Bloque'', items:[] }, { key:''Termine'', title:''Termine'', items:[] }] };");
+    	lines.push("        }");
+    	lines.push("        page.local.__c8oReserved_kanbanBoard[id] = data;");
+    	lines.push("        return data;");
+    	lines.push("      }");
+    	lines.push("      esc(s){ s = (s == null) ? '' : String(s); return s.replace(/&/g,''&amp;'').replace(/</g,''&lt;'').replace(/>/g,''&gt;'').replace(/\\\"/g,''&quot;'').replace(/\\''/g,''&#39;''); }");
+    	lines.push("      render(){");
+    	lines.push("        if (!this.shadowRoot) { return; }");
+    	lines.push("        var data = this.getData();");
+    	lines.push("        var cols = (data && Array.isArray(data.columns)) ? data.columns : [];");
+    	lines.push("        var html = \"<style>:host{display:block;font-family:Arial,Helvetica,sans-serif}.kb_wrap{border:1px solid #e0e0e0;border-radius:12px;padding:12px;background:#fff}.kb_cols{display:flex;gap:12px;align-items:flex-start;overflow:auto}.kb_col{min-width:260px;flex:1;background:#f7f8fa;border:1px solid #eceff3;border-radius:12px;padding:10px}.kb_head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.kb_badge{font-size:12px;background:#e8eaed;border-radius:999px;padding:2px 8px}.kb_card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:10px;margin-bottom:8px}.kb_title{font-weight:700;font-size:13px;color:#202124}.kb_desc{margin-top:6px;color:#5f6368;font-size:12px;white-space:pre-wrap}.kb_empty{color:#5f6368;font-size:12px;padding:8px;border:1px dashed #d0d7de;border-radius:10px;background:rgba(255,255,255,0.6)}</style><div class=''kb_wrap''><div class=''kb_cols''>\";");
+    	lines.push("        for (var i = 0; i < cols.length; i++) {");
+    	lines.push("          var c = cols[i] || {}; var arr = Array.isArray(c.items) ? c.items : [];");
+    	lines.push("          html += \"<div class=''kb_col''><div class=''kb_head''><div>\" + this.esc(c.title || c.key || ''Colonne'') + \"</div><div class=''kb_badge''>\" + arr.length + \"</div></div>\";");
+    	lines.push("          if (arr.length === 0) { html += \"<div class=''kb_empty''>Aucune tache</div>\"; } else {");
+    	lines.push("            for (var j = 0; j < arr.length; j++) { var it = arr[j] || {}; html += \"<div class=''kb_card''><div class=''kb_title''>\" + this.esc(it.title || it.name || '') + \"</div>\"; if (it.description || it.desc) { html += \"<div class=''kb_desc''>\" + this.esc(it.description || it.desc) + \"</div>\"; } html += \"</div>\"; }");
+    	lines.push("          }");
+    	lines.push("          html += \"</div>\";");
+    	lines.push("        }");
+    	lines.push("        html += \"</div></div>\";");
+    	lines.push("        this.shadowRoot.innerHTML = html;");
+    	lines.push("      }");
+    	lines.push("    }");
+    	lines.push("    customElements.define(tag, KanbanBoard);");
+    	lines.push("  }");
+    	lines.push("  var ids = " + idsJson + ";");
+    	lines.push("  for (var i = 0; i < ids.length; i++) {");
+    	lines.push("    var id = ids[i];");
+    	lines.push("    if (!page.local.__c8oReserved_kanbanBoard[id]) { page.local.__c8oReserved_kanbanBoard[id] = { columns: [{ key:''A faire'', title:''A faire'', items:[] }, { key:''En cours'', title:''En cours'', items:[] }, { key:''Bloque'', title:''Bloque'', items:[] }, { key:''Termine'', title:''Termine'', items:[] }] }; }");
+    	lines.push("    try { var el = document.getElementById(id); if (el && !el.getAttribute(''data'')) { el.setAttribute(''data'', JSON.stringify(page.local.__c8oReserved_kanbanBoard[id])); } } catch (e) {}");
+    	lines.push("  }");
+    	lines.push("  return true;");
+    	lines.push("})()");
+    	return lines.join("\n");
+    }
+    function ensureKanbanFallback(formObj, formulasFlow) {
+    	if (!formObj || !Array.isArray(formObj.formulaire) || !formulasFlow || !Array.isArray(formulasFlow.elements)) {
+    		return;
+    	}
+    	var ids = [];
+    	var seen = {};
+    	for (var i = 0; i < formObj.formulaire.length; i++) {
+    		var el = formObj.formulaire[i];
+    		var html = null;
+    		try { html = el && el.type == "description" && el.config ? el.config.html : null; } catch (e) { html = null; }
+    		if (typeof html != "string" || html.indexOf("kanban-board") == -1) {
+    			continue;
+    		}
+    		var re = /<kanban-board\b[^>]*id\s*=\s*[''"]([^''"]+)[''"][^>]*>/ig;
+    		var m = null;
+    		while ((m = re.exec(html)) != null) {
+    			var id = m[1];
+    			if (id && !seen[id]) { seen[id] = true; ids.push(id); }
+    		}
+    	}
+    	if (ids.length == 0) {
+    		return;
+    	}
+    	var target = null;
+    	for (var j = 0; j < formulasFlow.elements.length; j++) {
+    		var candidate = formulasFlow.elements[j];
+    		if (!candidate || candidate.type != "business_logic") {
+    			continue;
+    		}
+    		var code = getBusinessLogicCode(candidate);
+    		if (typeof code == "string" && code.indexOf("kanban-board") != -1 && code.indexOf("customElements.define") != -1) {
+    			target = candidate;
+    			break;
+    		}
+    	}
+    	var replace = false;
+    	if (target == null) {
+    		replace = true;
+    	} else {
+    		var currentCode = getBusinessLogicCode(target);
+    		if (currentCode.indexOf("Reflect.construct(HTMLElement") != -1 || currentCode.indexOf("function KanbanBoard(){") != -1) {
+    			replace = true;
+    		}
+    	}
+    	if (replace) {
+    		if (target == null) {
+    			target = {
+    				cat: "action",
+    				type: "business_logic",
+    				sources: { self: { enabled: true, vars: { selfVar: { str: "", type: "ts" } } } },
+    				config: { page: "formulas" },
+    				id: (new Date().getTime()) + 7000
+    			};
+    			target.name = "businessLogic" + target.id;
+    			formulasFlow.elements.push(target);
+    		}
+    		setBusinessLogicCode(target, buildKanbanFallbackCode(ids));
+    		normalizeBusinessLogic(target, formulasFlow.elements.length + 7);
+    	}
+    }
+    if (form && typeof form == "object") {
+    	if (!Array.isArray(form.flows)) {
+    		form.flows = [];
+    	}
+    	var formulasFlow = null;
+    	for (var fli = 0; fli < form.flows.length; fli++) {
+    		var flow = form.flows[fli];
+    		if (flow && (flow.id == "formulas" || flow.name == "formulas")) {
+    			formulasFlow = flow;
+    			break;
+    		}
+    	}
+    	if (formulasFlow == null) {
+    		formulasFlow = { id: "formulas", elements: [] };
+    		form.flows.push(formulasFlow);
+    	}
+    	if (!Array.isArray(formulasFlow.elements)) {
+    		formulasFlow.elements = [];
+    	}
+    	for (var fei = 0; fei < formulasFlow.elements.length; fei++) {
+    		normalizeBusinessLogic(formulasFlow.elements[fei], fei);
+    	}
+    	cleanupOrphanFormulaConfig(formulasFlow);
+    	if (Array.isArray(form.actions)) {
+    		var keptActions = [];
+    		for (var aii = 0; aii < form.actions.length; aii++) {
+    			var action = form.actions[aii];
+    			if (action && action.type == "business_logic") {
+    				normalizeBusinessLogic(action, formulasFlow.elements.length + aii);
+    				formulasFlow.elements.push(action);
+    			} else {
+    				keptActions.push(action);
+    			}
+    		}
+    		form.actions = keptActions;
+    	}
+    	for (var ffi = 0; ffi < form.flows.length; ffi++) {
+    		var flow2 = form.flows[ffi];
+    		if (!flow2 || flow2 == formulasFlow || !Array.isArray(flow2.elements)) {
+    			continue;
+    		}
+    		var keptElements = [];
+    		for (var eii = 0; eii < flow2.elements.length; eii++) {
+    			var elem = flow2.elements[eii];
+    			if (elem && elem.type == "business_logic") {
+    				normalizeBusinessLogic(elem, formulasFlow.elements.length + eii);
+    				formulasFlow.elements.push(elem);
+    			} else {
+    				keptElements.push(elem);
+    			}
+    		}
+    		flow2.elements = keptElements;
+    		cleanupOrphanFormulaConfig(flow2);
+    	}
+    	ensureKanbanFallback(form, formulasFlow);
+    }
+    if (form && typeof form == "object" && Array.isArray(form.formulaire)) {
+    	var byId = {};
+    	for (var fi = 0; fi < form.formulaire.length; fi++) {
+    		var formElt = form.formulaire[fi];
+    		if (formElt && formElt.id != null) {
+    			byId["" + formElt.id] = formElt;
+    		}
+    	}
+    	for (var pi = 0; pi < form.formulaire.length; pi++) {
+    		var parentElt = form.formulaire[pi];
+    		if (!parentElt || !Array.isArray(parentElt.childrenRefs)) {
+    			continue;
+    		}
+    		for (var ci = 0; ci < parentElt.childrenRefs.length; ci++) {
+    			var childId = parentElt.childrenRefs[ci];
+    			var childElt = byId["" + childId];
+    			if (childElt) {
+    				childElt.parentRef = parentElt.id;
+    			}
+    		}
+    	}
+    }
+    form = repairBrokenUnicode(form);
     '
 ↓form [steps.JsonFieldStep-1732031793365]: 
   key: 

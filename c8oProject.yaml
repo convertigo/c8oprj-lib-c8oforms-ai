@@ -1,11 +1,15 @@
 ↑convertigo: 8.0.0.m006
 ↓lib_C8Oforms_AI [core.Project]: 
   comment: Mashup Sequencer project
-  version: 0.1.5
+  version: 0.1.6
   ↓GPT [connectors.HttpConnector]: 🗏 connectors/GPT.yaml
   ↓Pexels [connectors.HttpConnector-1686746268587]: 🗏 connectors/Pexels.yaml
   ↓AssistantUpdateForm [sequences.GenericSequence-1732012681943]: 🗏 sequences/AssistantUpdateForm.yaml
   ↓Chat [sequences.GenericSequence]: 🗏 sequences/Chat.yaml
+  ↓ChatPoll [sequences.GenericSequence-1892000000202]: 🗏 sequences/ChatPoll.yaml
+  ↓ChatStart [sequences.GenericSequence-1892000000201]: 🗏 sequences/ChatStart.yaml
   ↓GenerateJsonForm [sequences.GenericSequence]: 🗏 sequences/GenerateJsonForm.yaml
+  ↓GenerateJsonFormPoll [sequences.GenericSequence-1891000000202]: 🗏 sequences/GenerateJsonFormPoll.yaml
+  ↓GenerateJsonFormStart [sequences.GenericSequence-1891000000201]: 🗏 sequences/GenerateJsonFormStart.yaml
   ↓C8Oforms_reference [references.ProjectSchemaReference]: 
     projectName: C8Oforms

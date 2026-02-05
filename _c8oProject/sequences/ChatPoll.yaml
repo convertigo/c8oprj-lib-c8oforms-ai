@@ -1,0 +1,60 @@
+authenticatedContextRequired: true
+responseTimeout: 700
+↓Init [steps.SimpleStep-1892000000101]: 
+  expression: |
+    'var key = jobId == null ? "" : ("" + jobId);
+    response = {
+    	jobId: key,
+    	status: "not_found",
+    	progress: "not_found",
+    	stream: "",
+    	streamSeq: "0",
+    	streamDone: "false"
+    };
+    
+    var session = context.httpSession;
+    if (session != null) {
+    	var jobs = session.getAttribute("libC8oformsAiChatJobs");
+    	if (jobs != null) {
+    		var job = jobs.get(key);
+    		if (job != null) {
+    			response.status = "" + job.get("status");
+    			response.progress = "" + (job.get("progress") == null ? "" : job.get("progress"));
+    			response.stream = "" + (job.get("streamText") == null ? "" : job.get("streamText"));
+    			response.streamSeq = "" + (job.get("streamSeq") == null ? "0" : job.get("streamSeq"));
+    			response.streamDone = "" + (job.get("streamDone") == null ? "false" : job.get("streamDone"));
+    			response.createdAt = "" + (job.get("createdAt") == null ? "" : job.get("createdAt"));
+    			response.updatedAt = "" + (job.get("updatedAt") == null ? "" : job.get("updatedAt"));
+    			
+    			var err = job.get("error");
+    			if (err != null) {
+    				response.error = "" + err;
+    			}
+    			
+    			var result = job.get("result");
+    			if (result != null && ("" + result).length > 0) {
+    				try {
+    					response.response = JSON.parse("" + result);
+    				} catch (e) {
+    					response.status = "error";
+    					response.progress = "error";
+    					response.error = "Failed to parse async result: " + e;
+    				}
+    			}
+    		}
+    	}
+    }'
+↓response [steps.JsonToXmlStep-1892000000102]: 
+  jsonObject: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: JS
+        - →→: response
+  key: 
+    - xmlizable: 
+      - ↑classname: com.twinsoft.convertigo.beans.steps.SmartType
+      - SmartType: 
+        - ↑mode: PLAIN
+        - →→: response
+↓jobId [variables.RequestableVariable-1892000000103]: 
