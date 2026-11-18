@@ -107,14 +107,16 @@ var callSequenceInDuplicateSession = function (project, sequence, parametersJS, 
 	}
 };
 
-// Streams OpenAI chat.completions tokens (SSE) and calls opts.onChunk(fullText, token)
-// opts: { onChunk: function(full, token){}, stopFlag: AtomicBoolean, temperature: number, maxTokens: number, responseFormat: object }
+// Streams chat.completions tokens (SSE) of the Convertigo LLM gateway (an OpenAI-compatible chat completions API, Mistral
+// models) and calls opts.onChunk(fullText, token)
+// opts: { onChunk: function(full, token){}, stopFlag: AtomicBoolean, temperature: number, maxTokens: number, responseFormat: object,
+//         server: host of the chat completions API (lib_C8Oforms_AI.GPT.server, default llm.convertigo.com) }
 var streamChatCompletions = function (apiKey, model, messages, opts) {
 	if (apiKey == null || ("" + apiKey).trim().length == 0) {
-		throw new java.lang.Exception("Missing OpenAI API key");
+		throw new java.lang.Exception("Missing API key of the LLM gateway (lib_C8Oforms_AI.GPT.apikey.secret)");
 	}
 	if (model == null || ("" + model).trim().length == 0) {
-		model = "gpt-4o";
+		model = "mistral/mistral-large-4";
 	}
 	if (!Array.isArray(messages)) {
 		messages = [];
@@ -134,9 +136,14 @@ var streamChatCompletions = function (apiKey, model, messages, opts) {
 		baseBody.max_tokens = opts.maxTokens;
 	}
 	var fullText = "";
+	// the host of the gateway, never a URL nor a path: a symbol that is not a host falls back to the gateway
+	var server = opts != null && opts.server != null ? ("" + opts.server).trim() : "";
+	if (!/^[A-Za-z0-9.-]+(?::\d{1,5})?$/.test(server)) {
+		server = "llm.convertigo.com";
+	}
 
 	var executeStream = function (body, allowRetryWithoutTemperature) {
-		var url = new java.net.URL("https://api.openai.com/v1/chat/completions");
+		var url = new java.net.URL("https://" + server + "/v1/chat/completions");
 		var conn = url.openConnection();
 		conn.setRequestMethod("POST");
 		conn.setDoOutput(true);

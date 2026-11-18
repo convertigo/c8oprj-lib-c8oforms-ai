@@ -27,7 +27,7 @@ responseTimeout: 700
     } catch (e) {
     }'
 ↓model [steps.SimpleStep-1732013814779]: 
-  expression: model = "${lib_C8Oforms_AI.GPT.model=gpt-4o}";
+  expression: model = "${lib_C8Oforms_AI.GPT.model=mistral/mistral-large-4}";
 ↓jIf1 [steps.IfStep-1730385864567]: 
   condition: form_id.length > 0
   ↓getForm [steps.SimpleStep-1730385864573]: 

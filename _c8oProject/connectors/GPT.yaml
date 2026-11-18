@@ -1,7 +1,7 @@
 ↑default: true
 https: ${lib_C8Oforms_AI.GPT.isHTTPS=true}
 port: ${lib_C8Oforms_AI.GPT.port=443}
-server: ${lib_C8Oforms_AI.GPT.server=api.openai.com}
+server: ${lib_C8Oforms_AI.GPT.server=llm.convertigo.com}
 trustAllServerCertificates: false
 ↓AssistantClear [transactions.JsonHttpTransaction-1732013737645]: 
   httpParameters: 
@@ -450,7 +450,7 @@ trustAllServerCertificates: false
     httpMethod: POST
   ↓model [variables.RequestableHttpVariable-1711132098790]: 
     httpMethod: POST
-    value: ${lib_C8Oforms_AI.GPT.model=gpt-4o}
+    value: ${lib_C8Oforms_AI.GPT.model=mistral/mistral-large-4}
 ↓UpdateJsonFormChat [transactions.JsonHttpTransaction-1686577278139]: 
   httpParameters: 
     - xmlizable: 

@@ -16,7 +16,8 @@ responseTimeout: 700
     var httpSessionAttributes = getCurrentHttpSessionAttributes();
     var now = java.lang.System.currentTimeMillis();
     var jobId = "ai_chat_job_" + now + "_" + Math.floor(Math.random() * 1000000);
-    var modelValue = "${lib_C8Oforms_AI.GPT.model=gpt-4o}";
+    var modelValue = "${lib_C8Oforms_AI.GPT.model=mistral/mistral-large-4}";
+    var serverValue = "${lib_C8Oforms_AI.GPT.server=llm.convertigo.com}";
     var apiKeyValue = "${lib_C8Oforms_AI.GPT.apikey.secret}";
     
     var session = context.httpSession;
@@ -87,6 +88,7 @@ responseTimeout: 700
     							}];
     							job.put("progress", "streaming_model");
     							streamChatCompletions(apiKeyValue, modelValue, previewMessages, {
+    								server: serverValue,
     								stopFlag: previewFlag,
     								temperature: 0.2,
     								onChunk: function(fullText, token) {
